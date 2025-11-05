@@ -1,0 +1,487 @@
+{
+  "content_types": {
+    "director": {
+      "title": "Director",
+      "uid": "director",
+      "description": "Movie directors and filmmakers",
+      "schema": [
+        {
+          "display_name": "Title",
+          "uid": "title",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false
+        },
+        {
+          "display_name": "Name",
+          "uid": "name",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false
+        },
+        {
+          "display_name": "Slug",
+          "uid": "slug",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": true,
+          "multiple": false,
+          "field_metadata": {
+            "description": "URL-friendly identifier (e.g., christopher-nolan)"
+          }
+        },
+        {
+          "display_name": "Bio",
+          "uid": "bio",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "multiline": true
+          }
+        },
+        {
+          "display_name": "Birth Year",
+          "uid": "birth_year",
+          "data_type": "number",
+          "mandatory": false,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "min": 1900,
+            "max": 2010
+          }
+        },
+        {
+          "display_name": "Profile Image",
+          "uid": "profile_image",
+          "data_type": "file",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "description": "Director's profile photo (400x400 recommended)"
+          }
+        }
+      ]
+    },
+    "genre": {
+      "title": "Genre",
+      "uid": "genre",
+      "description": "Movie genres and categories",
+      "schema": [
+        {
+          "display_name": "Title",
+          "uid": "title",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false
+        },
+        {
+          "display_name": "Name",
+          "uid": "name",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false
+        },
+        {
+          "display_name": "Slug",
+          "uid": "slug",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": true,
+          "multiple": false,
+          "field_metadata": {
+            "description": "URL-friendly identifier (e.g., sci-fi)"
+          }
+        },
+        {
+          "display_name": "Description",
+          "uid": "description",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "multiline": true
+          }
+        }
+      ]
+    },
+    "movie": {
+      "title": "Movie",
+      "uid": "movie",
+      "description": "Movies and films",
+      "schema": [
+        {
+          "display_name": "Title",
+          "uid": "title",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false
+        },
+        {
+          "display_name": "Slug",
+          "uid": "slug",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": true,
+          "multiple": false,
+          "field_metadata": {
+            "description": "URL-friendly identifier (e.g., inception)"
+          }
+        },
+        {
+          "display_name": "Description",
+          "uid": "description",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "multiline": true,
+            "description": "Movie plot and synopsis"
+          }
+        },
+        {
+          "display_name": "Release Year",
+          "uid": "release_year",
+          "data_type": "number",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "min": 1900,
+            "max": 2030
+          }
+        },
+        {
+          "display_name": "Duration",
+          "uid": "duration",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "description": "Format: '2h 28min'"
+          }
+        },
+        {
+          "display_name": "Rating",
+          "uid": "rating",
+          "data_type": "number",
+          "mandatory": false,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "min": 0,
+            "max": 5,
+            "description": "Rating out of 5 (e.g., 4.8)"
+          }
+        },
+        {
+          "display_name": "Featured",
+          "uid": "featured",
+          "data_type": "boolean",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "description": "Show this movie on the homepage"
+          }
+        },
+        {
+          "display_name": "Poster Image",
+          "uid": "poster_image",
+          "data_type": "file",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "description": "Vertical movie poster (400x600 or 2:3 ratio)"
+          }
+        },
+        {
+          "display_name": "Banner Image",
+          "uid": "banner_image",
+          "data_type": "file",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "description": "Horizontal banner (1920x1080 or 16:9 ratio)"
+          }
+        },
+        {
+          "display_name": "Trailer URL",
+          "uid": "trailer_url",
+          "data_type": "link",
+          "mandatory": false,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "description": "YouTube or Vimeo trailer link"
+          }
+        },
+        {
+          "display_name": "Genre",
+          "uid": "genre",
+          "data_type": "reference",
+          "mandatory": true,
+          "unique": false,
+          "multiple": true,
+          "reference_to": ["genre"],
+          "field_metadata": {
+            "ref_multiple": true,
+            "ref_multiple_content_types": false
+          }
+        },
+        {
+          "display_name": "Director",
+          "uid": "director",
+          "data_type": "reference",
+          "mandatory": true,
+          "unique": false,
+          "multiple": true,
+          "reference_to": ["director"],
+          "field_metadata": {
+            "ref_multiple": true,
+            "ref_multiple_content_types": false
+          }
+        }
+      ]
+    },
+    "review": {
+      "title": "Review",
+      "uid": "review",
+      "description": "Movie reviews and ratings",
+      "schema": [
+        {
+          "display_name": "Reviewer Name",
+          "uid": "reviewer_name",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false
+        },
+        {
+          "display_name": "Rating",
+          "uid": "rating",
+          "data_type": "number",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "min": 1,
+            "max": 5,
+            "description": "Rating from 1 to 5 stars (integer)"
+          }
+        },
+        {
+          "display_name": "Review Text",
+          "uid": "review_text",
+          "data_type": "text",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false,
+          "field_metadata": {
+            "multiline": true
+          }
+        },
+        {
+          "display_name": "Review Date",
+          "uid": "review_date",
+          "data_type": "isodate",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false
+        },
+        {
+          "display_name": "Movie",
+          "uid": "movie",
+          "data_type": "reference",
+          "mandatory": true,
+          "unique": false,
+          "multiple": false,
+          "reference_to": ["movie"],
+          "field_metadata": {
+            "ref_multiple": false,
+            "ref_multiple_content_types": false
+          }
+        }
+      ]
+    }
+  },
+  "sample_data": {
+    "directors": [
+      {
+        "title": "Christopher Nolan",
+        "name": "Christopher Nolan",
+        "slug": "christopher-nolan",
+        "bio": "Christopher Nolan is a British-American film director, producer, and screenwriter known for his intellectually challenging films.",
+        "birth_year": 1970
+      },
+      {
+        "title": "Jordan Peele",
+        "name": "Jordan Peele",
+        "slug": "jordan-peele",
+        "bio": "Jordan Peele is an American filmmaker and actor known for his horror films that explore social themes.",
+        "birth_year": 1979
+      },
+      {
+        "title": "Greta Gerwig",
+        "name": "Greta Gerwig",
+        "slug": "greta-gerwig",
+        "bio": "Greta Gerwig is an American actress, writer, and director known for her distinctive voice in independent cinema.",
+        "birth_year": 1983
+      },
+      {
+        "title": "Denis Villeneuve",
+        "name": "Denis Villeneuve",
+        "slug": "denis-villeneuve",
+        "bio": "Denis Villeneuve is a Canadian filmmaker known for his visually stunning science fiction films.",
+        "birth_year": 1967
+      },
+      {
+        "title": "Taika Waititi",
+        "name": "Taika Waititi",
+        "slug": "taika-waititi",
+        "bio": "Taika Waititi is a New Zealand filmmaker known for his quirky, comedic style.",
+        "birth_year": 1975
+      }
+    ],
+    "genres": [
+      {
+        "title": "Horror",
+        "name": "Horror",
+        "slug": "horror",
+        "description": "Films designed to frighten and invoke our darkest fears."
+      },
+      {
+        "title": "Comedy",
+        "name": "Comedy",
+        "slug": "comedy",
+        "description": "Films designed to make audiences laugh and feel good."
+      },
+      {
+        "title": "Sci-Fi",
+        "name": "Sci-Fi",
+        "slug": "sci-fi",
+        "description": "Films exploring futuristic concepts, space, and technology."
+      },
+      {
+        "title": "Action",
+        "name": "Action",
+        "slug": "action",
+        "description": "High-energy films with intense sequences and stunts."
+      },
+      {
+        "title": "Drama",
+        "name": "Drama",
+        "slug": "drama",
+        "description": "Character-driven films that explore emotional themes."
+      },
+      {
+        "title": "Thriller",
+        "name": "Thriller",
+        "slug": "thriller",
+        "description": "Suspenseful films that keep you on the edge of your seat."
+      },
+      {
+        "title": "Adventure",
+        "name": "Adventure",
+        "slug": "adventure",
+        "description": "Exciting films featuring journeys and exploration."
+      }
+    ],
+    "movies": [
+      {
+        "title": "Inception",
+        "slug": "inception",
+        "description": "A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.",
+        "release_year": 2010,
+        "duration": "2h 28min",
+        "rating": 4.8,
+        "featured": true,
+        "trailer_url": "https://www.youtube.com/watch?v=YoHD9XEInc0",
+        "genres": ["sci-fi", "action", "thriller"],
+        "directors": ["christopher-nolan"]
+      },
+      {
+        "title": "Get Out",
+        "slug": "get-out",
+        "description": "A young African-American visits his white girlfriend's parents for the weekend, where his simmering uneasiness about their reception of him eventually reaches a boiling point.",
+        "release_year": 2017,
+        "duration": "1h 44min",
+        "rating": 4.5,
+        "featured": true,
+        "trailer_url": "https://www.youtube.com/watch?v=sRfnevzM9kQ",
+        "genres": ["horror", "thriller"],
+        "directors": ["jordan-peele"]
+      },
+      {
+        "title": "Dune",
+        "slug": "dune",
+        "description": "A noble family becomes embroiled in a war for control over the galaxy's most valuable asset while its heir becomes troubled by visions of a dark future.",
+        "release_year": 2021,
+        "duration": "2h 35min",
+        "rating": 4.6,
+        "featured": true,
+        "genres": ["sci-fi", "adventure", "drama"],
+        "directors": ["denis-villeneuve"]
+      },
+      {
+        "title": "The Dark Knight",
+        "slug": "the-dark-knight",
+        "description": "When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.",
+        "release_year": 2008,
+        "duration": "2h 32min",
+        "rating": 4.9,
+        "featured": true,
+        "genres": ["action", "thriller", "drama"],
+        "directors": ["christopher-nolan"]
+      },
+      {
+        "title": "Interstellar",
+        "slug": "interstellar",
+        "description": "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.",
+        "release_year": 2014,
+        "duration": "2h 49min",
+        "rating": 4.7,
+        "featured": true,
+        "genres": ["sci-fi", "drama", "adventure"],
+        "directors": ["christopher-nolan"]
+      }
+    ],
+    "reviews": [
+      {
+        "reviewer_name": "John Smith",
+        "rating": 5,
+        "review_text": "Absolutely mind-bending! Nolan at his best. The visuals are stunning and the story keeps you engaged till the very end.",
+        "review_date": "2023-06-15",
+        "movie_slug": "inception"
+      },
+      {
+        "reviewer_name": "Mike Williams",
+        "rating": 5,
+        "review_text": "A brilliant social thriller that will stay with you long after watching. Jordan Peele is a genius.",
+        "review_date": "2023-05-10",
+        "movie_slug": "get-out"
+      },
+      {
+        "reviewer_name": "Emma Davis",
+        "rating": 5,
+        "review_text": "Visually stunning and epic in scope. Villeneuve brings Herbert's vision to life perfectly.",
+        "review_date": "2023-08-01",
+        "movie_slug": "dune"
+      }
+    ]
+  }
+}
+
