@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   searchMovieForChatbot, 
   getMoviesByGenreName,
-  getAllGenres 
+  getAllGenres,
+  getAllMovies
 } from '../api/contentstack';
 
 const ChatBot = () => {
@@ -10,7 +11,7 @@ const ChatBot = () => {
   const [messages, setMessages] = useState([
     {
       type: 'bot',
-      text: 'Hello! 👋 I can help you discover movies. Try asking me:\n• "Tell me about [movie name]"\n• "Recommend a [genre] movie"\n• "What genres are available?"'
+      text: 'Hello! 👋 I can help you discover movies. Try asking me:\n• "Tell me about [movie name]"\n• "Recommend a [genre] movie"\n• "Suggest movies about [topic]" (e.g., space travel)\n• "What genres are available?"'
     }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -23,6 +24,46 @@ const ChatBot = () => {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  // Helper function to extract meaningful keywords from the query
+  const extractKeywords = (message) => {
+    // Remove common words and extract meaningful keywords
+    const stopWords = ['recommend', 'suggest', 'movie', 'movies', 'film', 'films', 'about', 'on', 'a', 'an', 'the', 'with', 'in', 'for', 'to'];
+    const words = message.toLowerCase().split(' ');
+    const keywords = words.filter(word => 
+      word.length > 2 && !stopWords.includes(word)
+    );
+    return keywords;
+  };
+
+  // Helper function to search movies by topic/keywords
+  const searchMoviesByTopic = async (keywords) => {
+    const movies = await getAllMovies(); // Get all movies
+    
+    // Score each movie based on how many keywords match
+    const scoredMovies = movies.map(movie => {
+      let score = 0;
+      const movieText = `${movie.title} ${movie.description}`.toLowerCase();
+      
+      keywords.forEach(keyword => {
+        // Give higher score for title matches
+        if (movie.title.toLowerCase().includes(keyword)) {
+          score += 10;
+        }
+        // Regular score for description matches
+        if (movie.description?.toLowerCase().includes(keyword)) {
+          score += 5;
+        }
+      });
+      
+      return { ...movie, score };
+    });
+    
+    // Return movies with score > 0, sorted by score
+    return scoredMovies
+      .filter(movie => movie.score > 0)
+      .sort((a, b) => b.score - a.score);
   };
 
   const handleSend = async () => {
@@ -56,8 +97,9 @@ const ChatBot = () => {
       return "I'm having trouble fetching genres right now. Please try again later.";
     }
 
-    // Check for movie recommendation by genre
+    // Check for movie recommendation by genre or topic
     if (lowerMessage.includes('recommend') || lowerMessage.includes('suggest')) {
+      // First check for genre-based recommendations
       const genres = await getAllGenres();
       for (const genre of genres) {
         if (lowerMessage.includes(genre.name.toLowerCase())) {
@@ -79,7 +121,29 @@ const ChatBot = () => {
           return `I couldn't find any ${genre.name} movies at the moment.`;
         }
       }
-      return "Please specify a genre, e.g., 'Recommend an Action movie' or 'Suggest a Drama film'.";
+      
+      // If no genre found, search by topic/keywords in description
+      const keywords = extractKeywords(lowerMessage);
+      if (keywords.length > 0) {
+        const movies = await searchMoviesByTopic(keywords);
+        if (movies.length > 0) {
+          const topMovies = movies
+            .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+            .slice(0, 5);
+          
+          let response = `Here are movies about ${keywords.join(', ')}:\n\n`;
+          topMovies.forEach((movie, idx) => {
+            response += `${idx + 1}. **${movie.title}** (${movie.release_year})`;
+            if (movie.rating) response += ` - ⭐ ${movie.rating.toFixed(1)}`;
+            if (movie.director?.[0]) response += ` - Directed by ${movie.director[0].name}`;
+            response += '\n';
+          });
+          return response;
+        }
+        return `I couldn't find any movies about ${keywords.join(', ')}. Try another topic!`;
+      }
+      
+      return "Please specify a genre or topic, e.g., 'Recommend movies about space travel' or 'Suggest a Drama film'.";
     }
 
     // Check for "tell me about" requests

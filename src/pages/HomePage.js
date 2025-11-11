@@ -120,8 +120,21 @@ const HomePage = () => {
 
         {genres.length === 0 && (
           <div className="empty-state">
-            <h2>No genres available</h2>
-            <p>Please add genres to get started</p>
+            <h2>⚠️ No genres available</h2>
+            <p>No genres found in Contentstack</p>
+            <div className="error-help" style={{ marginTop: '20px', textAlign: 'left', maxWidth: '600px', margin: '20px auto' }}>
+              <p><strong>Please check:</strong></p>
+              <ol style={{ textAlign: 'left', marginTop: '10px' }}>
+                <li>You have created the "genre" content type in Contentstack</li>
+                <li>You have added genre entries (Horror, Comedy, Sci-Fi, etc.)</li>
+                <li>All genre entries are <strong>PUBLISHED</strong> (not just saved)</li>
+                <li>The environment matches (check browser console)</li>
+                <li>Your API credentials are correct in .env file</li>
+              </ol>
+              <p style={{ marginTop: '15px' }}>
+                <strong>Check the browser console (F12) for detailed error messages.</strong>
+              </p>
+            </div>
           </div>
         )}
       </div>

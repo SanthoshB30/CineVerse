@@ -1,384 +1,70 @@
 /**
  * ============================================================================
- * DATA SERVICE - Client-Side Mock Data Store
+ * DATA SERVICE - Contentstack Integration
  * ============================================================================
  * 
- * This service provides mock data for the Movie Review Platform.
- * All data is stored as static arrays and queried in-memory.
- * 
- * Benefits:
- * - No external API dependencies
- * - Instant load time
- * - Perfect for demo and development
- * - Easy to customize and extend
- * 
- * To use real Contentstack data, see contentstack.js
+ * This service fetches and caches data from Contentstack.
+ * All data is fetched once on initialization and cached for performance.
  * 
  * ============================================================================
  */
 
+import * as Contentstack from 'contentstack';
+
 /**
  * ============================================================================
- * MOCK DATA DEFINITIONS
+ * CONTENTSTACK CONFIGURATION
  * ============================================================================
  */
 
-// Mock Directors
-const MOCK_DIRECTORS = [
-  {
-    uid: 'dir_1',
-    title: 'Christopher Nolan',
-    name: 'Christopher Nolan',
-    slug: 'christopher-nolan',
-    bio: 'Christopher Nolan is a British-American film director, producer, and screenwriter known for his intellectually challenging films.',
-    birth_year: 1970,
-    profile_image: {
-      url: 'https://images.unsplash.com/photo-1560419015-7c427e8ae5ba?w=400&h=400&fit=crop'
-    }
-  },
-  {
-    uid: 'dir_2',
-    title: 'Jordan Peele',
-    name: 'Jordan Peele',
-    slug: 'jordan-peele',
-    bio: 'Jordan Peele is an American filmmaker and actor known for his horror films that explore social themes.',
-    birth_year: 1979,
-    profile_image: {
-      url: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop'
-    }
-  },
-  {
-    uid: 'dir_3',
-    title: 'Greta Gerwig',
-    name: 'Greta Gerwig',
-    slug: 'greta-gerwig',
-    bio: 'Greta Gerwig is an American actress, writer, and director known for her distinctive voice in independent cinema.',
-    birth_year: 1983,
-    profile_image: {
-      url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop'
-    }
-  },
-  {
-    uid: 'dir_4',
-    title: 'Denis Villeneuve',
-    name: 'Denis Villeneuve',
-    slug: 'denis-villeneuve',
-    bio: 'Denis Villeneuve is a Canadian filmmaker known for his visually stunning science fiction films.',
-    birth_year: 1967,
-    profile_image: {
-      url: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop'
-    }
-  },
-  {
-    uid: 'dir_5',
-    title: 'Taika Waititi',
-    name: 'Taika Waititi',
-    slug: 'taika-waititi',
-    bio: 'Taika Waititi is a New Zealand filmmaker known for his quirky, comedic style.',
-    birth_year: 1975,
-    profile_image: {
-      url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&fit=crop'
-    }
-  }
-];
+// Initialize Contentstack SDK
+const Stack = Contentstack.Stack({
+  api_key: process.env.REACT_APP_CONTENTSTACK_API_KEY,
+  delivery_token: process.env.REACT_APP_CONTENTSTACK_DELIVERY_TOKEN,
+  environment: process.env.REACT_APP_CONTENTSTACK_ENVIRONMENT || 'testing',
+  region: process.env.REACT_APP_CONTENTSTACK_REGION || 'us'
+});
 
-// Mock Genres
-const MOCK_GENRES = [
-  {
-    uid: 'genre_1',
-    title: 'Horror',
-    name: 'Horror',
-    slug: 'horror',
-    description: 'Films designed to frighten and invoke our darkest fears.'
-  },
-  {
-    uid: 'genre_2',
-    title: 'Comedy',
-    name: 'Comedy',
-    slug: 'comedy',
-    description: 'Films designed to make audiences laugh and feel good.'
-  },
-  {
-    uid: 'genre_3',
-    title: 'Sci-Fi',
-    name: 'Sci-Fi',
-    slug: 'sci-fi',
-    description: 'Films exploring futuristic concepts, space, and technology.'
-  },
-  {
-    uid: 'genre_4',
-    title: 'Action',
-    name: 'Action',
-    slug: 'action',
-    description: 'High-energy films with intense sequences and stunts.'
-  },
-  {
-    uid: 'genre_5',
-    title: 'Drama',
-    name: 'Drama',
-    slug: 'drama',
-    description: 'Character-driven films that explore emotional themes.'
-  },
-  {
-    uid: 'genre_6',
-    title: 'Thriller',
-    name: 'Thriller',
-    slug: 'thriller',
-    description: 'Suspenseful films that keep you on the edge of your seat.'
-  },
-  {
-    uid: 'genre_7',
-    title: 'Adventure',
-    name: 'Adventure',
-    slug: 'adventure',
-    description: 'Exciting films featuring journeys and exploration.'
+// Validate configuration
+const validateConfig = () => {
+  const apiKey = process.env.REACT_APP_CONTENTSTACK_API_KEY;
+  const deliveryToken = process.env.REACT_APP_CONTENTSTACK_DELIVERY_TOKEN;
+  
+  if (!apiKey || !deliveryToken) {
+    console.error('❌ Contentstack credentials missing!');
+    console.error('Please check your .env file has:');
+    console.error('  - REACT_APP_CONTENTSTACK_API_KEY');
+    console.error('  - REACT_APP_CONTENTSTACK_DELIVERY_TOKEN');
+    console.error('  - REACT_APP_CONTENTSTACK_ENVIRONMENT');
+    console.error('  - REACT_APP_CONTENTSTACK_REGION');
+    return false;
   }
-];
-
-// Mock Movies
-const MOCK_MOVIES = [
-  {
-    uid: 'movie_1',
-    title: 'Inception',
-    slug: 'inception',
-    description: 'A thief who steals corporate secrets through dream-sharing technology is given the inverse task of planting an idea into the mind of a C.E.O.',
-    release_year: 2010,
-    duration: '2h 28min',
-    rating: 4.8,
-    featured: true,
-    poster_image: {
-      url: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400&h=600&fit=crop'
-    },
-    banner_image: {
-      url: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1920&h=1080&fit=crop'
-    },
-    trailer_url: 'https://www.youtube.com/watch?v=YoHD9XEInc0',
-    genre: [MOCK_GENRES[2], MOCK_GENRES[3], MOCK_GENRES[5]],
-    director: [MOCK_DIRECTORS[0]]
-  },
-  {
-    uid: 'movie_2',
-    title: 'Get Out',
-    slug: 'get-out',
-    description: 'A young African-American visits his white girlfriend\'s parents for the weekend, where his simmering uneasiness about their reception of him eventually reaches a boiling point.',
-    release_year: 2017,
-    duration: '1h 44min',
-    rating: 4.5,
-    featured: true,
-    poster_image: {
-      url: 'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=400&h=600&fit=crop'
-    },
-    banner_image: {
-      url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1920&h=1080&fit=crop'
-    },
-    trailer_url: 'https://www.youtube.com/watch?v=sRfnevzM9kQ',
-    genre: [MOCK_GENRES[0], MOCK_GENRES[5]],
-    director: [MOCK_DIRECTORS[1]]
-  },
-  {
-    uid: 'movie_3',
-    title: 'Lady Bird',
-    slug: 'lady-bird',
-    description: 'In 2002, an artistically inclined seventeen-year-old girl comes of age in Sacramento, California.',
-    release_year: 2017,
-    duration: '1h 34min',
-    rating: 4.3,
-    featured: false,
-    poster_image: {
-      url: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=600&fit=crop'
-    },
-    banner_image: {
-      url: 'https://images.unsplash.com/photo-1524985069026-dd778a71c7b4?w=1920&h=1080&fit=crop'
-    },
-    genre: [MOCK_GENRES[1], MOCK_GENRES[4]],
-    director: [MOCK_DIRECTORS[2]]
-  },
-  {
-    uid: 'movie_4',
-    title: 'Dune',
-    slug: 'dune',
-    description: 'A noble family becomes embroiled in a war for control over the galaxy\'s most valuable asset while its heir becomes troubled by visions of a dark future.',
-    release_year: 2021,
-    duration: '2h 35min',
-    rating: 4.6,
-    featured: true,
-    poster_image: {
-      url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400&h=600&fit=crop'
-    },
-    banner_image: {
-      url: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&h=1080&fit=crop'
-    },
-    genre: [MOCK_GENRES[2], MOCK_GENRES[6], MOCK_GENRES[4]],
-    director: [MOCK_DIRECTORS[3]]
-  },
-  {
-    uid: 'movie_5',
-    title: 'Thor: Ragnarok',
-    slug: 'thor-ragnarok',
-    description: 'Imprisoned on the planet Sakaar, Thor must race against time to return to Asgard and stop Ragnarök, the destruction of his world, at the hands of the powerful and ruthless villain Hela.',
-    release_year: 2017,
-    duration: '2h 10min',
-    rating: 4.4,
-    featured: false,
-    poster_image: {
-      url: 'https://images.unsplash.com/photo-1611604548018-d56bbd85d681?w=400&h=600&fit=crop'
-    },
-    banner_image: {
-      url: 'https://images.unsplash.com/photo-1635805737707-575885ab0b6e?w=1920&h=1080&fit=crop'
-    },
-    genre: [MOCK_GENRES[3], MOCK_GENRES[1], MOCK_GENRES[6]],
-    director: [MOCK_DIRECTORS[4]]
-  },
-  {
-    uid: 'movie_6',
-    title: 'Us',
-    slug: 'us',
-    description: 'A family\'s serene beach vacation turns to chaos when their doppelgängers appear and begin to terrorize them.',
-    release_year: 2019,
-    duration: '1h 56min',
-    rating: 4.2,
-    featured: false,
-    poster_image: {
-      url: 'https://images.unsplash.com/photo-1574267432644-f610ff34e55b?w=400&h=600&fit=crop'
-    },
-    banner_image: {
-      url: 'https://images.unsplash.com/photo-1507924538820-ede94a04019d?w=1920&h=1080&fit=crop'
-    },
-    genre: [MOCK_GENRES[0], MOCK_GENRES[5]],
-    director: [MOCK_DIRECTORS[1]]
-  },
-  {
-    uid: 'movie_7',
-    title: 'The Dark Knight',
-    slug: 'the-dark-knight',
-    description: 'When the menace known as the Joker wreaks havoc and chaos on the people of Gotham, Batman must accept one of the greatest psychological and physical tests of his ability to fight injustice.',
-    release_year: 2008,
-    duration: '2h 32min',
-    rating: 4.9,
-    featured: true,
-    poster_image: {
-      url: 'https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?w=400&h=600&fit=crop'
-    },
-    banner_image: {
-      url: 'https://images.unsplash.com/photo-1516937941344-00b4e0337589?w=1920&h=1080&fit=crop'
-    },
-    genre: [MOCK_GENRES[3], MOCK_GENRES[5], MOCK_GENRES[4]],
-    director: [MOCK_DIRECTORS[0]]
-  },
-  {
-    uid: 'movie_8',
-    title: 'Jojo Rabbit',
-    slug: 'jojo-rabbit',
-    description: 'A young German boy in the Hitler Youth whose hero and imaginary friend is the country\'s dictator is shocked to discover that his mother is hiding a Jewish girl in their home.',
-    release_year: 2019,
-    duration: '1h 48min',
-    rating: 4.4,
-    featured: false,
-    poster_image: {
-      url: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=400&h=600&fit=crop'
-    },
-    banner_image: {
-      url: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1920&h=1080&fit=crop'
-    },
-    genre: [MOCK_GENRES[1], MOCK_GENRES[4]],
-    director: [MOCK_DIRECTORS[4]]
-  },
-  {
-    uid: 'movie_9',
-    title: 'Interstellar',
-    slug: 'interstellar',
-    description: 'A team of explorers travel through a wormhole in space in an attempt to ensure humanity\'s survival.',
-    release_year: 2014,
-    duration: '2h 49min',
-    rating: 4.7,
-    featured: true,
-    poster_image: {
-      url: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400&h=600&fit=crop'
-    },
-    banner_image: {
-      url: 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=1920&h=1080&fit=crop'
-    },
-    genre: [MOCK_GENRES[2], MOCK_GENRES[4], MOCK_GENRES[6]],
-    director: [MOCK_DIRECTORS[0]]
-  },
-  {
-    uid: 'movie_10',
-    title: 'A Quiet Place',
-    slug: 'a-quiet-place',
-    description: 'In a post-apocalyptic world, a family is forced to live in silence while hiding from monsters with ultra-sensitive hearing.',
-    release_year: 2018,
-    duration: '1h 30min',
-    rating: 4.3,
-    featured: false,
-    poster_image: {
-      url: 'https://images.unsplash.com/photo-1574267432644-f610ff34e55b?w=400&h=600&fit=crop'
-    },
-    banner_image: {
-      url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1920&h=1080&fit=crop'
-    },
-    genre: [MOCK_GENRES[0], MOCK_GENRES[2], MOCK_GENRES[5]],
-    director: [{ uid: 'dir_6', name: 'John Krasinski' }]
-  }
-];
-
-// Mock Reviews
-const MOCK_REVIEWS = [
-  {
-    uid: 'review_1',
-    movie_uid: 'movie_1',
-    reviewer_name: 'John Smith',
-    rating: 5,
-    review_text: 'Absolutely mind-bending! Nolan at his best. The visuals are stunning and the story keeps you engaged till the very end.',
-    review_date: '2023-06-15',
-    movie: MOCK_MOVIES[0]
-  },
-  {
-    uid: 'review_2',
-    movie_uid: 'movie_1',
-    reviewer_name: 'Sarah Johnson',
-    rating: 5,
-    review_text: 'A masterpiece of modern cinema. Complex, thrilling, and beautifully executed.',
-    review_date: '2023-07-20',
-    movie: MOCK_MOVIES[0]
-  },
-  {
-    uid: 'review_3',
-    movie_uid: 'movie_2',
-    reviewer_name: 'Mike Williams',
-    rating: 5,
-    review_text: 'A brilliant social thriller that will stay with you long after watching. Jordan Peele is a genius.',
-    review_date: '2023-05-10',
-    movie: MOCK_MOVIES[1]
-  },
-  {
-    uid: 'review_4',
-    movie_uid: 'movie_4',
-    reviewer_name: 'Emma Davis',
-    rating: 5,
-    review_text: 'Visually stunning and epic in scope. Villeneuve brings Herbert\'s vision to life perfectly.',
-    review_date: '2023-08-01',
-    movie: MOCK_MOVIES[3]
-  }
-];
+  
+  console.log('✅ Contentstack configuration found');
+  console.log(`   Environment: ${process.env.REACT_APP_CONTENTSTACK_ENVIRONMENT || 'testing'}`);
+  console.log(`   Region: ${process.env.REACT_APP_CONTENTSTACK_REGION || 'us'}`);
+  console.log(`   API Key: ${apiKey.substring(0, 10)}...`);
+  return true;
+};
 
 /**
  * ============================================================================
- * CLIENT-SIDE DATA STORE
+ * DATA STORE CLASS
  * ============================================================================
  */
 
 class DataStore {
   constructor() {
-    this.movies = MOCK_MOVIES;
-    this.genres = MOCK_GENRES;
-    this.directors = MOCK_DIRECTORS;
-    this.reviews = MOCK_REVIEWS;
+    this.movies = [];
+    this.genres = [];
+    this.directors = [];
+    this.reviews = [];
     this.isInitialized = false;
     this.initializationPromise = null;
   }
 
   /**
-   * Initialize the data store with mock data (instant)
+   * Initialize the data store by fetching from Contentstack
    */
   async initialize() {
     // If already initialized, return
@@ -392,22 +78,39 @@ class DataStore {
     }
 
     // Start initialization
-    this.initializationPromise = this._loadMockData();
+    this.initializationPromise = this._loadFromContentstack();
     return this.initializationPromise;
   }
 
   /**
-   * Load mock data (simulates API call for consistent interface)
+   * Load all data from Contentstack
    */
-  async _loadMockData() {
+  async _loadFromContentstack() {
     try {
-      console.log('🚀 Loading mock data...');
+      console.log('🚀 Loading data from Contentstack...');
+      console.log('-----------------------------------');
+      
+      // Validate configuration first
+      if (!validateConfig()) {
+        throw new Error('Invalid Contentstack configuration');
+      }
+
       const startTime = Date.now();
 
-      // Simulate network delay for realistic experience
-      await new Promise(resolve => setTimeout(resolve, 300));
+      // Fetch all content types sequentially to see which one fails
+      console.log('\n📦 Fetching content types...\n');
+      
+      const directors = await this._fetchDirectors();
+      const genres = await this._fetchGenres();
+      const movies = await this._fetchMovies();
+      const reviews = await this._fetchReviews();
 
-      // Data is already loaded in constructor
+      // Store in memory
+      this.directors = directors;
+      this.genres = genres;
+      this.movies = movies;
+      this.reviews = reviews;
+
       // Mark as initialized
       this.isInitialized = true;
       this.initializationPromise = null;
@@ -415,15 +118,27 @@ class DataStore {
       const endTime = Date.now();
       const loadTime = ((endTime - startTime) / 1000).toFixed(2);
 
-      console.log(`✅ Mock data loaded successfully in ${loadTime}s:`);
-      console.log(`   - Movies: ${this.movies.length}`);
-      console.log(`   - Genres: ${this.genres.length}`);
+      console.log('-----------------------------------');
+      console.log(`✅ Data loaded successfully from Contentstack in ${loadTime}s:`);
       console.log(`   - Directors: ${this.directors.length}`);
+      console.log(`   - Genres: ${this.genres.length}`);
+      console.log(`   - Movies: ${this.movies.length}`);
       console.log(`   - Reviews: ${this.reviews.length}`);
+      console.log('-----------------------------------\n');
+
+      // Warning if no data
+      if (this.genres.length === 0) {
+        console.warn('⚠️  WARNING: No genres found!');
+        console.warn('   Make sure you have:');
+        console.warn('   1. Created "genre" content type in Contentstack');
+        console.warn('   2. Added genre entries');
+        console.warn('   3. PUBLISHED the genre entries');
+        console.warn('   4. Environment matches:', process.env.REACT_APP_CONTENTSTACK_ENVIRONMENT || 'testing');
+      }
 
       return {
         success: true,
-        message: 'Mock data loaded successfully',
+        message: 'Data loaded successfully from Contentstack',
         stats: {
           movies: this.movies.length,
           genres: this.genres.length,
@@ -433,28 +148,149 @@ class DataStore {
         }
       };
     } catch (error) {
-      console.error('❌ Error loading mock data:', error);
+      console.error('❌ Error loading data from Contentstack:', error);
+      console.error('Error details:', error.message);
+      console.error('Stack:', error.stack);
       this.initializationPromise = null;
       return {
         success: false,
-        message: 'Failed to load mock data',
+        message: 'Failed to load data from Contentstack: ' + error.message,
         error: error.message
       };
     }
   }
 
   /**
-   * Refresh/reload mock data
+   * Fetch Directors from Contentstack
+   */
+  async _fetchDirectors() {
+    try {
+      console.log('📋 Fetching directors...');
+      const Query = Stack.ContentType('director').Query();
+      const result = await Query.toJSON().find();
+      
+      const entries = result[0] || [];
+      console.log(`   Found ${entries.length} directors`);
+      
+      return entries.map(entry => ({
+        uid: entry.uid,
+        title: entry.title || entry.name,
+        name: entry.name,
+        slug: entry.slug,
+        bio: entry.bio,
+        birth_year: entry.birth_year,
+        profile_image: entry.profile_image
+      }));
+    } catch (error) {
+      console.error('❌ Error fetching directors:', error.message || error);
+      console.error('   Full error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Fetch Genres from Contentstack
+   */
+  async _fetchGenres() {
+    try {
+      console.log('📋 Fetching genres...');
+      const Query = Stack.ContentType('genre').Query();
+      const result = await Query.toJSON().find();
+      
+      const entries = result[0] || [];
+      console.log(`   Found ${entries.length} genres`);
+      
+      return entries.map(entry => ({
+        uid: entry.uid,
+        title: entry.title || entry.name,
+        name: entry.name,
+        slug: entry.slug,
+        description: entry.description
+      }));
+    } catch (error) {
+      console.error('❌ Error fetching genres:', error.message || error);
+      console.error('   Full error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Fetch Movies from Contentstack
+   */
+  async _fetchMovies() {
+    try {
+      console.log('📋 Fetching movies...');
+      const Query = Stack.ContentType('movie').Query();
+      const result = await Query
+        .includeReference('genre')
+        .includeReference('director')
+        .toJSON()
+        .find();
+      
+      const entries = result[0] || [];
+      console.log(`   Found ${entries.length} movies`);
+      
+      return entries.map(entry => ({
+        uid: entry.uid,
+        title: entry.title,
+        slug: entry.slug,
+        description: entry.description,
+        release_year: entry.release_year,
+        duration: entry.duration,
+        rating: entry.rating,
+        featured: entry.featured || false,
+        poster_image: entry.poster_image,
+        banner_image: entry.banner_image,
+        trailer_url: entry.trailer_url,
+        streaming_links: entry.streaming_links || [],
+        genre: Array.isArray(entry.genre) ? entry.genre : [],
+        director: Array.isArray(entry.director) ? entry.director : []
+      }));
+    } catch (error) {
+      console.error('❌ Error fetching movies:', error.message || error);
+      console.error('   Full error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Fetch Reviews from Contentstack
+   */
+  async _fetchReviews() {
+    try {
+      console.log('📋 Fetching reviews...');
+      const Query = Stack.ContentType('review').Query();
+      const result = await Query
+        .includeReference('movie')
+        .toJSON()
+        .find();
+      
+      const entries = result[0] || [];
+      console.log(`   Found ${entries.length} reviews`);
+      
+      return entries.map(entry => ({
+        uid: entry.uid,
+        reviewer_name: entry.reviewer_name,
+        rating: entry.rating,
+        review_text: entry.review_text,
+        review_date: entry.review_date,
+        movie: entry.movie?.[0] || null,
+        movie_uid: entry.movie?.[0]?.uid || null
+      }));
+    } catch (error) {
+      console.error('❌ Error fetching reviews:', error.message || error);
+      console.error('   Full error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Refresh/reload data from Contentstack
    */
   async refresh() {
-    console.log('🔄 Refreshing mock data...');
+    console.log('🔄 Refreshing data from Contentstack...');
     this.isInitialized = false;
     this.initializationPromise = null;
-    // Reset to original mock data
-    this.movies = MOCK_MOVIES;
-    this.genres = MOCK_GENRES;
-    this.directors = MOCK_DIRECTORS;
-    this.reviews = MOCK_REVIEWS;
     return await this.initialize();
   }
 
@@ -484,7 +320,7 @@ const dataStore = new DataStore();
 
 /**
  * ============================================================================
- * DATA QUERY FUNCTIONS (Used by other parts of the app)
+ * INITIALIZATION FUNCTIONS
  * ============================================================================
  */
 
@@ -812,4 +648,3 @@ export default {
   formatDate,
   calculateAverageRating
 };
-

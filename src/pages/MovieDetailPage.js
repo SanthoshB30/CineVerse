@@ -106,8 +106,8 @@ const MovieDetailPage = () => {
               />
             </div>
 
-            {movie.trailer_url && (
-              <div className="movie-actions">
+            <div className="movie-actions">
+              {movie.trailer_url && (
                 <a 
                   href={movie.trailer_url}
                   target="_blank"
@@ -116,6 +116,26 @@ const MovieDetailPage = () => {
                 >
                   🎬 Watch Trailer
                 </a>
+              )}
+            </div>
+
+            {movie.streaming_links && movie.streaming_links.length > 0 && (
+              <div className="streaming-section">
+                <h3>Watch Now On</h3>
+                <div className="streaming-platforms">
+                  {movie.streaming_links.map((link, index) => (
+                    <a
+                      key={index}
+                      href={link.watch_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="streaming-button"
+                    >
+                      <span className="platform-icon">▶</span>
+                      <span className="platform-name">{link.platform}</span>
+                    </a>
+                  ))}
+                </div>
               </div>
             )}
           </div>

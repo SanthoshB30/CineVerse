@@ -22,14 +22,14 @@
  * ============================================================================
  */
 
+// Import DataService for real Contentstack data
+import * as DataService from '../services/dataService';
+
 /**
  * CHOOSE YOUR DATA SOURCE:
  * Set USE_MOCK_DATA to true for demo, false for real Contentstack data
  */
-const USE_MOCK_DATA = true; // Change to false when you have Contentstack setup
-
-// Import DataService for real Contentstack data
-import * as DataService from '../services/dataService';
+const USE_MOCK_DATA = false; // Changed to use real Contentstack data
 
 // Export initialization function
 export const initializeData = DataService.initializeDataStore;
@@ -171,6 +171,10 @@ const MOCK_MOVIES = [
       url: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=1920&h=1080&fit=crop'
     },
     trailer_url: 'https://www.youtube.com/watch?v=YoHD9XEInc0',
+    streaming_links: [
+      { platform: 'Prime Video', watch_url: 'https://www.amazon.com/Inception-Leonardo-DiCaprio/dp/B003EIWXMQ' },
+      { platform: 'Netflix', watch_url: 'https://www.netflix.com/title/70131314' }
+    ],
     genre: [MOCK_GENRES[2], MOCK_GENRES[3], MOCK_GENRES[5]],
     director: [MOCK_DIRECTORS[0]]
   },
@@ -190,6 +194,10 @@ const MOCK_MOVIES = [
       url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1920&h=1080&fit=crop'
     },
     trailer_url: 'https://www.youtube.com/watch?v=sRfnevzM9kQ',
+    streaming_links: [
+      { platform: 'Netflix', watch_url: 'https://www.netflix.com/title/80091288' },
+      { platform: 'Prime Video', watch_url: 'https://www.amazon.com/Get-Out-Daniel-Kaluuya/dp/B06Y5ZTHFK' }
+    ],
     genre: [MOCK_GENRES[0], MOCK_GENRES[5]],
     director: [MOCK_DIRECTORS[1]]
   },
@@ -226,6 +234,10 @@ const MOCK_MOVIES = [
     banner_image: {
       url: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=1920&h=1080&fit=crop'
     },
+    streaming_links: [
+      { platform: 'HBO Max', watch_url: 'https://www.hbomax.com/movie/dune' },
+      { platform: 'Prime Video', watch_url: 'https://www.amazon.com/Dune-Timoth%C3%A9e-Chalamet/dp/B09DKSHLZ1' }
+    ],
     genre: [MOCK_GENRES[2], MOCK_GENRES[6], MOCK_GENRES[4]],
     director: [MOCK_DIRECTORS[3]]
   },
@@ -280,6 +292,10 @@ const MOCK_MOVIES = [
     banner_image: {
       url: 'https://images.unsplash.com/photo-1516937941344-00b4e0337589?w=1920&h=1080&fit=crop'
     },
+    streaming_links: [
+      { platform: 'HBO Max', watch_url: 'https://www.hbomax.com/movie/the-dark-knight' },
+      { platform: 'Prime Video', watch_url: 'https://www.amazon.com/Dark-Knight-Christian-Bale/dp/B001GZ6QEC' }
+    ],
     genre: [MOCK_GENRES[3], MOCK_GENRES[5], MOCK_GENRES[4]],
     director: [MOCK_DIRECTORS[0]]
   },
@@ -316,6 +332,10 @@ const MOCK_MOVIES = [
     banner_image: {
       url: 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=1920&h=1080&fit=crop'
     },
+    streaming_links: [
+      { platform: 'Prime Video', watch_url: 'https://www.amazon.com/Interstellar-Matthew-McConaughey/dp/B00TU9UFTS' },
+      { platform: 'Paramount+', watch_url: 'https://www.paramountplus.com/movies/interstellar/' }
+    ],
     genre: [MOCK_GENRES[2], MOCK_GENRES[4], MOCK_GENRES[6]],
     director: [MOCK_DIRECTORS[0]]
   },

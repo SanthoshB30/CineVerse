@@ -811,6 +811,82 @@ body {
 }
 
 /* ===================================
+   STREAMING SECTION
+   =================================== */
+
+.streaming-section {
+  margin-top: 3rem;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  border: 1px solid rgba(108, 92, 231, 0.2);
+}
+
+.streaming-section h3 {
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.streaming-platforms {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.streaming-button {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  color: var(--text-primary);
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: var(--transition);
+  box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.streaming-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(108, 92, 231, 0.5);
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
+}
+
+.platform-icon {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.platform-name {
+  font-size: 1rem;
+  letter-spacing: 0.3px;
+}
+
+/* Responsive streaming section */
+@media (max-width: 768px) {
+  .streaming-platforms {
+    flex-direction: column;
+  }
+  
+  .streaming-button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .streaming-section {
+    padding: 1.5rem;
+    margin-top: 2rem;
+  }
+}
+
+/* ===================================
    REVIEWS
    =================================== */
 
