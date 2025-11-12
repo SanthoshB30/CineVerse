@@ -21,13 +21,14 @@ const Navigation = () => {
   return (
     <nav className="navigation">
       <div className="nav-container">
-        <Link to="/" className="nav-logo">
+        <Link to="/home" className="nav-logo">
           🎬 CineVerse
         </Link>
 
         <div className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
-          <Link to="/" className="nav-link">Home</Link>
+          <Link to="/home" className="nav-link">Home</Link>
           <Link to="/directors" className="nav-link">Directors</Link>
+          <Link to="/actors" className="nav-link">Actors</Link>
         </div>
 
         <div className="nav-right">

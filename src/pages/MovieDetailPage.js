@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getMovieBySlug, getImageUrl } from '../api/contentstack';
+import { getMovieBySlug, getImageUrl, getMoviesByGenre } from '../api/contentstack';
 import ReviewSection from '../components/ReviewSection';
+import MovieCard from '../components/MovieCard';
 
 const MovieDetailPage = () => {
   const { slug } = useParams();
   const [movie, setMovie] = useState(null);
+  const [similarMovies, setSimilarMovies] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,6 +18,19 @@ const MovieDetailPage = () => {
     setLoading(true);
     const movieData = await getMovieBySlug(slug);
     setMovie(movieData);
+    
+    // Load similar movies based on genre
+    if (movieData && movieData.genre && movieData.genre.length > 0) {
+      const genreSlug = movieData.genre[0].slug;
+      const moviesInGenre = await getMoviesByGenre(genreSlug);
+      
+      // Filter out current movie and limit to 6 similar movies
+      const similar = moviesInGenre
+        .filter(m => m.uid !== movieData.uid)
+        .slice(0, 6);
+      setSimilarMovies(similar);
+    }
+    
     setLoading(false);
   };
 
@@ -145,6 +160,18 @@ const MovieDetailPage = () => {
         <div className="movie-reviews">
           <ReviewSection movieUid={movie.uid} />
         </div>
+
+        {/* Similar Movies Section */}
+        {similarMovies.length > 0 && (
+          <div className="similar-movies-section">
+            <h2 className="section-title">Similar to this</h2>
+            <div className="similar-movies-grid">
+              {similarMovies.map(similarMovie => (
+                <MovieCard key={similarMovie.uid} movie={similarMovie} />
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

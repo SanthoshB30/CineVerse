@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const LoginPage = () => {
+const SignUpPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { signup } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -31,39 +30,41 @@ const LoginPage = () => {
       return;
     }
 
-    // Attempt login
-    const result = login(email, password, rememberMe);
+    // Validate password strength
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      setLoading(false);
+      return;
+    }
+
+    // Attempt signup
+    const result = signup(email, password);
     
     setLoading(false);
     
     if (result.success) {
-      // Check if user has profiles, otherwise redirect to profile creation
-      if (result.user.profiles && result.user.profiles.length > 0) {
-        navigate('/select-profile');
-      } else {
-        navigate('/create-profile');
-      }
+      navigate('/create-profile');
     } else {
       setError(result.error);
-      setPassword(''); // Clear password on error
     }
   };
 
   return (
-    <div className="login-page">
-      <div className="login-container">
-        <div className="login-header">
-          <h1 className="login-logo">🎬 CineVerse</h1>
-          <p className="login-subtitle">Your Universe of Cinema</p>
+    <div className="signup-page">
+      <div className="signup-container">
+        <div className="signup-header">
+          <h1 className="signup-logo">🎬 CineVerse</h1>
+          <h2 className="signup-headline">Unlimited movies.</h2>
+          <p className="signup-tagline">Ready to enter the multiverse of movies?</p>
         </div>
 
-        <form className="login-form" onSubmit={handleSubmit}>
+        <form className="signup-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <input
               type="email"
               id="email"
               className="form-input"
-              placeholder="Email"
+              placeholder="Email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
@@ -76,10 +77,10 @@ const LoginPage = () => {
               type="password"
               id="password"
               className="form-input"
-              placeholder="Password"
+              placeholder="Password (min. 6 characters)"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              autoComplete="current-password"
+              autoComplete="new-password"
             />
           </div>
 
@@ -91,44 +92,26 @@ const LoginPage = () => {
 
           <button 
             type="submit" 
-            className="btn btn-primary btn-block"
+            className="btn btn-primary btn-block btn-large"
             disabled={loading}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Creating account...' : 'Next'}
           </button>
 
-          <div className="login-options">
-            <Link to="/forgot-password" className="forgot-password-link">
-              Forgot password?
-            </Link>
-          </div>
-
-          <div className="remember-me">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              />
-              <span>Remember me</span>
-            </label>
-          </div>
-
-          <div className="signup-section">
-            <p className="signup-text">New to CineVerse?</p>
-            <Link to="/signup" className="signup-link">
-              Sign up now
-            </Link>
+          <div className="signin-section">
+            <p className="signin-text">
+              Already have an account? <Link to="/login" className="signin-link">Sign in</Link>
+            </p>
           </div>
         </form>
       </div>
 
-      <div className="login-background">
+      <div className="signup-background">
         <div className="background-overlay"></div>
       </div>
     </div>
   );
 };
 
-export default LoginPage;
+export default SignUpPage;
 
