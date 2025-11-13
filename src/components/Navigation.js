@@ -27,6 +27,7 @@ const Navigation = () => {
 
         <div className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
           <Link to="/home" className="nav-link">Home</Link>
+          <Link to="/genres" className="nav-link">Genres</Link>
           <Link to="/directors" className="nav-link">Directors</Link>
           <Link to="/actors" className="nav-link">Actors</Link>
         </div>

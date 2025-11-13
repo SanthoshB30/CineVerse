@@ -58,6 +58,8 @@ class DataStore {
     this.movies = [];
     this.genres = [];
     this.directors = [];
+    this.actors = [];
+    this.collections = [];
     this.reviews = [];
     this.isInitialized = false;
     this.initializationPromise = null;
@@ -102,12 +104,16 @@ class DataStore {
       
       const directors = await this._fetchDirectors();
       const genres = await this._fetchGenres();
+      const actors = await this._fetchActors();
+      const collections = await this._fetchCollections();
       const movies = await this._fetchMovies();
       const reviews = await this._fetchReviews();
 
       // Store in memory
       this.directors = directors;
       this.genres = genres;
+      this.actors = actors;
+      this.collections = collections;
       this.movies = movies;
       this.reviews = reviews;
 
@@ -122,6 +128,8 @@ class DataStore {
       console.log(`✅ Data loaded successfully from Contentstack in ${loadTime}s:`);
       console.log(`   - Directors: ${this.directors.length}`);
       console.log(`   - Genres: ${this.genres.length}`);
+      console.log(`   - Actors: ${this.actors.length}`);
+      console.log(`   - Collections: ${this.collections.length}`);
       console.log(`   - Movies: ${this.movies.length}`);
       console.log(`   - Reviews: ${this.reviews.length}`);
       console.log('-----------------------------------\n');
@@ -143,6 +151,8 @@ class DataStore {
           movies: this.movies.length,
           genres: this.genres.length,
           directors: this.directors.length,
+          actors: this.actors.length,
+          collections: this.collections.length,
           reviews: this.reviews.length,
           loadTime: loadTime
         }
@@ -205,10 +215,69 @@ class DataStore {
         title: entry.title || entry.name,
         name: entry.name,
         slug: entry.slug,
-        description: entry.description
+        description: entry.description,
+        genre_image: entry.genre_image
       }));
     } catch (error) {
       console.error('❌ Error fetching genres:', error.message || error);
+      console.error('   Full error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Fetch Actors from Contentstack
+   */
+  async _fetchActors() {
+    try {
+      console.log('📋 Fetching actors...');
+      const Query = Stack.ContentType('actor').Query();
+      const result = await Query.toJSON().find();
+      
+      const entries = result[0] || [];
+      console.log(`   Found ${entries.length} actors`);
+      
+      return entries.map(entry => ({
+        uid: entry.uid,
+        title: entry.title || entry.name,
+        name: entry.name,
+        slug: entry.slug,
+        bio: entry.bio,
+        birth_year: entry.birth_year,
+        profile_image: entry.profile_image
+      }));
+    } catch (error) {
+      console.error('❌ Error fetching actors:', error.message || error);
+      console.error('   Full error:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Fetch Collections from Contentstack
+   */
+  async _fetchCollections() {
+    try {
+      console.log('📋 Fetching collections...');
+      const Query = Stack.ContentType('collection').Query();
+      const result = await Query
+        .includeReference('movies')
+        .toJSON()
+        .find();
+      
+      const entries = result[0] || [];
+      console.log(`   Found ${entries.length} collections`);
+      
+      return entries.map(entry => ({
+        uid: entry.uid,
+        title: entry.title,
+        slug: entry.slug,
+        description: entry.description,
+        featured_image: entry.featured_image,
+        movies: Array.isArray(entry.movies) ? entry.movies : []
+      }));
+    } catch (error) {
+      console.error('❌ Error fetching collections:', error.message || error);
       console.error('   Full error:', error);
       return [];
     }
@@ -310,6 +379,8 @@ class DataStore {
       movies: this.movies.length,
       genres: this.genres.length,
       directors: this.directors.length,
+      actors: this.actors.length,
+      collections: this.collections.length,
       reviews: this.reviews.length
     };
   }
@@ -375,6 +446,14 @@ export const getAllMovies = () => {
 export const getFeaturedMovies = () => {
   if (!dataStore.isInitialized) return [];
   return dataStore.movies.filter(movie => movie.featured === true);
+};
+
+/**
+ * Get upcoming movies (for profile page background slideshow)
+ */
+export const getUpcomingMovies = () => {
+  if (!dataStore.isInitialized) return [];
+  return dataStore.movies.filter(movie => movie.upcoming === true);
 };
 
 /**
@@ -534,6 +613,76 @@ export const getDirectorByUid = (uid) => {
 
 /**
  * ============================================================================
+ * ACTOR QUERIES
+ * ============================================================================
+ */
+
+/**
+ * Get all actors
+ */
+export const getAllActors = () => {
+  if (!dataStore.isInitialized) return [];
+  
+  // Add movies_acted_in to each actor (if needed in future)
+  return dataStore.actors.map(actor => ({
+    ...actor
+  }));
+};
+
+/**
+ * Get actor by slug
+ */
+export const getActorBySlug = (slug) => {
+  if (!dataStore.isInitialized) return null;
+  
+  const actor = dataStore.actors.find(a => a.slug === slug);
+  if (!actor) return null;
+
+  return {
+    ...actor
+  };
+};
+
+/**
+ * Get actor by UID
+ */
+export const getActorByUid = (uid) => {
+  if (!dataStore.isInitialized) return null;
+  return dataStore.actors.find(a => a.uid === uid) || null;
+};
+
+/**
+ * ============================================================================
+ * COLLECTION QUERIES
+ * ============================================================================
+ */
+
+/**
+ * Get all collections
+ */
+export const getAllCollections = () => {
+  if (!dataStore.isInitialized) return [];
+  return [...dataStore.collections];
+};
+
+/**
+ * Get collection by slug
+ */
+export const getCollectionBySlug = (slug) => {
+  if (!dataStore.isInitialized) return null;
+  return dataStore.collections.find(c => c.slug === slug) || null;
+};
+
+/**
+ * Get collection by UID
+ */
+export const getCollectionByUid = (uid) => {
+  if (!dataStore.isInitialized) return null;
+  return dataStore.collections.find(c => c.uid === uid) || null;
+};
+
+/**
+ * ============================================================================
  * REVIEW QUERIES
  * ============================================================================
  */
@@ -620,6 +769,7 @@ export default {
   // Movies
   getAllMovies,
   getFeaturedMovies,
+  getUpcomingMovies,
   getMovieBySlug,
   getMovieByUid,
   getMoviesByGenre,
@@ -637,6 +787,16 @@ export default {
   getAllDirectors,
   getDirectorBySlug,
   getDirectorByUid,
+  
+  // Actors
+  getAllActors,
+  getActorBySlug,
+  getActorByUid,
+  
+  // Collections
+  getAllCollections,
+  getCollectionBySlug,
+  getCollectionByUid,
   
   // Reviews
   getAllReviews,

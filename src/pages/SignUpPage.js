@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import LogoHeader from '../components/LogoHeader';
 
 const SignUpPage = () => {
   const [email, setEmail] = useState('');
@@ -52,8 +53,8 @@ const SignUpPage = () => {
   return (
     <div className="signup-page">
       <div className="signup-container">
-        <div className="signup-header">
-          <h1 className="signup-logo">🎬 CineVerse</h1>
+        <LogoHeader />
+        <div className="signup-headline-section">
           <h2 className="signup-headline">Unlimited movies.</h2>
           <p className="signup-tagline">Ready to enter the multiverse of movies?</p>
         </div>

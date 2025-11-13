@@ -2922,3 +2922,964 @@ body {
   }
 }
 
+/* ===================================
+   LOGO HEADER COMPONENT
+   =================================== */
+
+.logo-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.logo-header .logo {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: var(--primary-color);
+  margin: 0;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.logo-header .logo-subtitle {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+/* ===================================
+   SIGNUP HEADLINE SECTION
+   =================================== */
+
+.signup-headline-section {
+  text-align: center;
+  margin: 2rem 0;
+}
+
+.signup-headline {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.signup-tagline {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+}
+
+/* ===================================
+   ACTOR PAGE
+   =================================== */
+
+.actor-page {
+  min-height: 100vh;
+  padding: 0;
+}
+
+.actor-header {
+  background: linear-gradient(to bottom, var(--background-light) 0%, var(--background-dark) 100%);
+  padding: 4rem 2rem;
+  display: flex;
+  gap: 3rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  align-items: flex-start;
+}
+
+.actor-profile {
+  flex-shrink: 0;
+}
+
+.actor-profile img {
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--primary-color);
+  box-shadow: 0 8px 32px rgba(108, 92, 231, 0.4);
+}
+
+.actor-info {
+  flex: 1;
+  padding-top: 2rem;
+}
+
+.actor-info h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.actor-year {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.actor-bio {
+  font-size: 1.1rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+}
+
+.actor-filmography {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 4rem 2rem;
+}
+
+.actor-filmography h2 {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+}
+
+/* ===================================
+   COLLECTION PAGE
+   =================================== */
+
+.collection-page {
+  min-height: 100vh;
+}
+
+.collection-hero {
+  height: 40vh;
+  min-height: 300px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.collection-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(15,15,30,0.3) 0%, var(--background-dark) 100%);
+}
+
+.collection-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.collection-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  margin-top: -4rem;
+  position: relative;
+  z-index: 10;
+}
+
+.collection-title {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.collection-description {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  max-width: 700px;
+  margin: 0 auto 1rem;
+}
+
+.collection-count {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.collection-movies-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2rem;
+}
+
+/* ===================================
+   ALL COLLECTIONS PAGE
+   =================================== */
+
+.all-collections-page {
+  min-height: 100vh;
+  padding: 2rem;
+}
+
+.collections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.collection-card {
+  text-decoration: none;
+  color: var(--text-primary);
+  display: block;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: var(--transition);
+  background: var(--background-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.collection-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 32px rgba(108, 92, 231, 0.4);
+}
+
+.collection-card-image {
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+}
+
+.collection-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.8) 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 1.5rem;
+}
+
+.collection-card-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.collection-card-count {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.collection-card-description {
+  padding: 1.5rem;
+}
+
+.collection-card-description p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ===================================
+   ENHANCED ACTOR & DIRECTOR CARDS
+   =================================== */
+
+.actors-grid,
+.directors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.actor-card,
+.director-card {
+  text-decoration: none;
+  color: var(--text-primary);
+  display: block;
+  text-align: center;
+  transition: var(--transition);
+  background: var(--background-light);
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.actor-card:hover,
+.director-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 32px rgba(108, 92, 231, 0.4);
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(0, 217, 255, 0.1) 100%);
+}
+
+.actor-card-image,
+.director-card-image {
+  margin-bottom: 1rem;
+}
+
+.actor-card-image img,
+.director-card-image img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--primary-color);
+  transition: var(--transition);
+}
+
+.actor-card:hover .actor-card-image img,
+.director-card:hover .director-card-image img {
+  border-color: var(--accent-color);
+  transform: scale(1.05);
+}
+
+.actor-card-info h3,
+.director-card-info h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.actor-year,
+.director-year {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+/* ===================================
+   COMING SOON NOTICE
+   =================================== */
+
+.coming-soon-notice {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, rgba(108, 92, 231, 0.1) 0%, rgba(0, 217, 255, 0.1) 100%);
+  border-radius: 12px;
+  margin-top: 2rem;
+}
+
+.coming-soon-notice p {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ===================================
+   RESPONSIVE DESIGN - ACTORS & COLLECTIONS
+   =================================== */
+
+@media (max-width: 1024px) {
+  .actor-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 3rem 2rem;
+  }
+
+  .actor-profile img {
+    width: 250px;
+    height: 250px;
+  }
+
+  .actor-info h1 {
+    font-size: 2.5rem;
+  }
+
+  .collection-title {
+    font-size: 2.5rem;
+  }
+
+  .collections-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .actor-profile img {
+    width: 200px;
+    height: 200px;
+  }
+
+  .actor-info h1 {
+    font-size: 2rem;
+  }
+
+  .collection-title {
+    font-size: 2rem;
+  }
+
+  .collections-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .actors-grid,
+  .directors-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .actor-card-image img,
+  .director-card-image img {
+    width: 120px;
+    height: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .actor-profile img {
+    width: 150px;
+    height: 150px;
+  }
+
+  .actor-info h1 {
+    font-size: 1.5rem;
+  }
+
+  .collection-title {
+    font-size: 1.8rem;
+  }
+
+  .actors-grid,
+  .directors-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===================================
+   UPDATED HOME PAGE - NO SIDEBAR
+   =================================== */
+
+.home-content-full {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 3rem 2rem;
+}
+
+.home-browse-section {
+  margin-bottom: 4rem;
+}
+
+.section-header-with-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.section-header-with-link .section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.section-header-with-link .view-all-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 1rem;
+  transition: var(--transition);
+  font-weight: 600;
+}
+
+.section-header-with-link .view-all-link:hover {
+  color: var(--primary-color);
+}
+
+.no-content-text {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+/* ===================================
+   HOME GENRE CARDS
+   =================================== */
+
+.home-genre-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.5rem;
+}
+
+.home-genre-card {
+  background: linear-gradient(135deg, var(--background-light) 0%, var(--hover-color) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  transition: var(--transition);
+  cursor: pointer;
+  min-height: 140px;
+}
+
+.home-genre-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--primary-color);
+  box-shadow: 0 12px 24px rgba(108, 92, 231, 0.3);
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+}
+
+.home-genre-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  transition: var(--transition);
+}
+
+.home-genre-card:hover .home-genre-icon {
+  transform: scale(1.2) rotate(5deg);
+}
+
+.home-genre-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* ===================================
+   HOME PEOPLE CARDS (Directors/Actors)
+   =================================== */
+
+.home-people-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1.5rem;
+}
+
+.home-people-card {
+  text-decoration: none;
+  color: var(--text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transition: var(--transition);
+  cursor: pointer;
+}
+
+.home-people-card:hover {
+  transform: translateY(-5px);
+}
+
+.home-people-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  border: 3px solid var(--primary-color);
+  transition: var(--transition);
+  background: var(--background-light);
+}
+
+.home-people-card:hover .home-people-image {
+  border-color: var(--accent-color);
+  box-shadow: 0 8px 24px rgba(108, 92, 231, 0.5);
+  transform: scale(1.05);
+}
+
+.home-people-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-people-name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  line-height: 1.3;
+}
+
+/* ===================================
+   BROWSE PAGE (Genres/Directors/Actors)
+   =================================== */
+
+.browse-page {
+  min-height: 100vh;
+  padding: 3rem 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.browse-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.browse-title {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.browse-subtitle {
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+}
+
+.browse-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+}
+
+.browse-card {
+  background: var(--background-light);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  transition: var(--transition);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.browse-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+  opacity: 0;
+  transition: var(--transition);
+}
+
+.browse-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--primary-color);
+  box-shadow: 0 12px 32px rgba(108, 92, 231, 0.4);
+}
+
+.browse-card:hover::before {
+  opacity: 0.1;
+}
+
+.browse-card-icon {
+  font-size: 4rem;
+  flex-shrink: 0;
+  z-index: 1;
+  transition: var(--transition);
+}
+
+.browse-card:hover .browse-card-icon {
+  transform: scale(1.2) rotate(10deg);
+}
+
+.browse-card-content {
+  flex: 1;
+  z-index: 1;
+}
+
+.browse-card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.browse-card-description {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.browse-card-arrow {
+  font-size: 2rem;
+  color: var(--primary-color);
+  z-index: 1;
+  transition: var(--transition);
+}
+
+.browse-card:hover .browse-card-arrow {
+  transform: translateX(10px);
+  color: var(--accent-color);
+}
+
+/* ===================================
+   NAVIGATION DROPDOWN UPDATES
+   =================================== */
+
+.nav-dropdown-trigger {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.nav-dropdown-trigger:hover {
+  color: var(--text-secondary);
+}
+
+/* ===================================
+   RESPONSIVE UPDATES
+   =================================== */
+
+@media (max-width: 1024px) {
+  .home-genre-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+
+  .home-people-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .browse-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .home-content-full {
+    padding: 2rem 1.5rem;
+  }
+
+  .home-browse-section {
+    margin-bottom: 3rem;
+  }
+
+  .section-header-with-link {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .section-header-with-link .section-title {
+    font-size: 1.5rem;
+  }
+
+  .home-genre-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 1rem;
+  }
+
+  .home-genre-card {
+    padding: 1.5rem 1rem;
+    min-height: 120px;
+  }
+
+  .home-genre-icon {
+    font-size: 2.5rem;
+  }
+
+  .home-genre-name {
+    font-size: 1rem;
+  }
+
+  .home-people-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1rem;
+  }
+
+  .home-people-image {
+    width: 100px;
+    height: 100px;
+  }
+
+  .home-people-name {
+    font-size: 0.9rem;
+  }
+
+  .browse-title {
+    font-size: 2rem;
+  }
+
+  .browse-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .browse-card {
+    padding: 1.5rem;
+  }
+
+  .browse-card-icon {
+    font-size: 3rem;
+  }
+
+  .browse-card-title {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .home-genre-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .home-people-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .browse-header {
+    margin-bottom: 2rem;
+  }
+
+  .browse-title {
+    font-size: 1.8rem;
+  }
+
+  .browse-subtitle {
+    font-size: 1rem;
+  }
+}
+
+/* ===================================
+   SIMPLIFIED HOME PAGE - MOVIES ONLY
+   =================================== */
+
+.home-movies-only-section {
+  margin-top: 2rem;
+}
+
+.home-movies-only-section .section-header {
+  margin-bottom: 2rem;
+}
+
+.home-movies-only-section .section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.home-movies-only-section .section-subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* ===================================
+   NAVIGATION - DIRECT LINKS STYLE
+   =================================== */
+
+.nav-links {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+}
+
+.nav-links .nav-link {
+  position: relative;
+  padding-bottom: 0.25rem;
+}
+
+.nav-links .nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--primary-color);
+  transition: width 0.3s ease;
+}
+
+.nav-links .nav-link:hover::after {
+  width: 100%;
+}
+
+/* ===================================
+   RESPONSIVE - SIMPLIFIED NAV
+   =================================== */
+
+@media (max-width: 768px) {
+  .nav-links {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem 0;
+  }
+
+  .nav-links .nav-link::after {
+    display: none;
+  }
+}
+
+/* ===================================
+   GENRE IMAGES FROM CONTENTSTACK
+   =================================== */
+
+.browse-card-icon .genre-image {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 12px;
+  transition: var(--transition);
+}
+
+.browse-card:hover .browse-card-icon .genre-image {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 0 8px 16px rgba(108, 92, 231, 0.4);
+}
+
+.browse-card-icon .genre-emoji {
+  font-size: 4rem;
+  display: block;
+  transition: var(--transition);
+}
+
+.browse-card:hover .browse-card-icon .genre-emoji {
+  transform: scale(1.2) rotate(10deg);
+}
+
+/* Home Genre Cards with Images */
+.home-genre-card .genre-card-visual {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.home-genre-card .genre-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+.home-genre-card:hover .genre-card-image {
+  transform: scale(1.1);
+}
+
+.home-genre-card .genre-card-emoji {
+  font-size: 3rem;
+  transition: var(--transition);
+}
+
+.home-genre-card:hover .genre-card-emoji {
+  transform: scale(1.2) rotate(5deg);
+}
+
+/* Responsive Genre Images */
+@media (max-width: 768px) {
+  .browse-card-icon .genre-image {
+    width: 60px;
+    height: 60px;
+  }
+
+  .home-genre-card .genre-card-visual {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+@media (max-width: 480px) {
+  .browse-card-icon .genre-image {
+    width: 50px;
+    height: 50px;
+  }
+
+  .home-genre-card .genre-card-visual {
+    width: 40px;
+    height: 40px;
+  }
+}

@@ -1,41 +1,70 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { getAllActors, getImageUrl } from '../api/contentstack';
 
 const AllActorsPage = () => {
-  // Placeholder for future actor functionality
-  const actors = [
-    { id: 1, name: 'Tom Hanks', image: '👨' },
-    { id: 2, name: 'Meryl Streep', image: '👩' },
-    { id: 3, name: 'Leonardo DiCaprio', image: '🧑' },
-    { id: 4, name: 'Jennifer Lawrence', image: '👩' },
-    { id: 5, name: 'Robert Downey Jr.', image: '👨' },
-    { id: 6, name: 'Scarlett Johansson', image: '👩' },
-    { id: 7, name: 'Denzel Washington', image: '👨' },
-    { id: 8, name: 'Cate Blanchett', image: '👩' }
-  ];
+  const [actors, setActors] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadActors();
+  }, []);
+
+  const loadActors = async () => {
+    setLoading(true);
+    const actorsData = await getAllActors();
+    setActors(actorsData);
+    setLoading(false);
+  };
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="loader"></div>
+        <p>Loading actors...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="all-actors-page">
       <div className="page-header">
-        <h1>Actors</h1>
-        <p>Discover talented actors from around the world</p>
+        <h1>All Actors</h1>
+        <p>{actors.length} {actors.length === 1 ? 'actor' : 'actors'} in our collection</p>
       </div>
 
-      <div className="actors-grid">
-        {actors.map(actor => (
-          <div key={actor.id} className="actor-card">
-            <div className="actor-card-image">
-              <div className="actor-avatar">{actor.image}</div>
-            </div>
-            <div className="actor-card-info">
-              <h3>{actor.name}</h3>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <div className="coming-soon-notice">
-        <p>🎬 Full actor profiles and filmographies coming soon!</p>
-      </div>
+      {actors.length > 0 ? (
+        <div className="actors-grid">
+          {actors.map(actor => {
+            const profileUrl = getImageUrl(actor.profile_image) || 
+                              'https://via.placeholder.com/200x200/1a1a1a/ffffff?text=' + 
+                              encodeURIComponent(actor.name.charAt(0));
+            
+            return (
+              <Link 
+                key={actor.uid}
+                to={`/actor/${actor.slug}`}
+                className="actor-card"
+              >
+                <div className="actor-card-image">
+                  <img src={profileUrl} alt={actor.name} />
+                </div>
+                <div className="actor-card-info">
+                  <h3>{actor.name}</h3>
+                  {actor.birth_year && (
+                    <p className="actor-year">Born {actor.birth_year}</p>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <h2>No actors found</h2>
+          <p>Actor profiles will appear here once added to Contentstack.</p>
+        </div>
+      )}
     </div>
   );
 };
