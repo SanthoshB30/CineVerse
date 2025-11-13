@@ -107,49 +107,70 @@ const MOCK_GENRES = [
     title: 'Horror',
     name: 'Horror',
     slug: 'horror',
-    description: 'Films designed to frighten and invoke our darkest fears.'
+    description: 'Films designed to frighten and invoke our darkest fears.',
+    genre_image: {
+      url: 'https://images.unsplash.com/photo-1509248961158-e54f6934749c?w=200&h=200&fit=crop'
+    }
   },
   {
     uid: 'genre_2',
     title: 'Comedy',
     name: 'Comedy',
     slug: 'comedy',
-    description: 'Films designed to make audiences laugh and feel good.'
+    description: 'Films designed to make audiences laugh and feel good.',
+    genre_image: {
+      url: 'https://images.unsplash.com/photo-1585951237318-9ea5e175b891?w=200&h=200&fit=crop'
+    }
   },
   {
     uid: 'genre_3',
     title: 'Sci-Fi',
     name: 'Sci-Fi',
     slug: 'sci-fi',
-    description: 'Films exploring futuristic concepts, space, and technology.'
+    description: 'Films exploring futuristic concepts, space, and technology.',
+    genre_image: {
+      url: 'https://images.unsplash.com/photo-1446776653964-20c1d3a81b06?w=200&h=200&fit=crop'
+    }
   },
   {
     uid: 'genre_4',
     title: 'Action',
     name: 'Action',
     slug: 'action',
-    description: 'High-energy films with intense sequences and stunts.'
+    description: 'High-energy films with intense sequences and stunts.',
+    genre_image: {
+      url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=200&h=200&fit=crop'
+    }
   },
   {
     uid: 'genre_5',
     title: 'Drama',
     name: 'Drama',
     slug: 'drama',
-    description: 'Character-driven films that explore emotional themes.'
+    description: 'Character-driven films that explore emotional themes.',
+    genre_image: {
+      url: 'https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=200&h=200&fit=crop'
+    }
   },
   {
     uid: 'genre_6',
     title: 'Thriller',
     name: 'Thriller',
     slug: 'thriller',
-    description: 'Suspenseful films that keep you on the edge of your seat.'
+    description: 'Suspenseful films that keep you on the edge of your seat.',
+    genre_image: {
+      url: 'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=200&h=200&fit=crop'
+    }
   },
   {
     uid: 'genre_7',
     title: 'Adventure',
     name: 'Adventure',
     slug: 'adventure',
-    description: 'Exciting films featuring journeys and exploration.'
+    description: 'Exciting films featuring journeys and exploration.',
+    genre_image: {
+      url: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=200&fit=crop'
+    }
   }
 ];
 
@@ -423,6 +444,16 @@ export const getFeaturedMovies = async () => {
   return DataService.getFeaturedMovies();
 };
 
+// Fetch upcoming movies (for profile page background)
+export const getUpcomingMovies = async () => {
+  if (USE_MOCK_DATA) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    // Return featured movies as upcoming in mock mode
+    return MOCK_MOVIES.filter(movie => movie.featured).slice(0, 5);
+  }
+  return DataService.getUpcomingMovies();
+};
+
 // Fetch a single movie by slug
 export const getMovieBySlug = async (slug) => {
   if (USE_MOCK_DATA) {
@@ -494,6 +525,82 @@ export const getDirectorBySlug = async (slug) => {
     };
   }
   return DataService.getDirectorBySlug(slug);
+};
+
+/**
+ * ============================================================================
+ * ACTOR API FUNCTIONS
+ * ============================================================================
+ */
+
+// Fetch all actors
+export const getAllActors = async () => {
+  if (USE_MOCK_DATA) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    // Mock actors data
+    return [
+      { uid: 'actor_1', name: 'Tom Hanks', slug: 'tom-hanks', birth_year: 1956 },
+      { uid: 'actor_2', name: 'Meryl Streep', slug: 'meryl-streep', birth_year: 1949 },
+      { uid: 'actor_3', name: 'Leonardo DiCaprio', slug: 'leonardo-dicaprio', birth_year: 1974 },
+      { uid: 'actor_4', name: 'Jennifer Lawrence', slug: 'jennifer-lawrence', birth_year: 1990 },
+      { uid: 'actor_5', name: 'Robert Downey Jr.', slug: 'robert-downey-jr', birth_year: 1965 },
+      { uid: 'actor_6', name: 'Scarlett Johansson', slug: 'scarlett-johansson', birth_year: 1984 },
+      { uid: 'actor_7', name: 'Denzel Washington', slug: 'denzel-washington', birth_year: 1954 },
+      { uid: 'actor_8', name: 'Cate Blanchett', slug: 'cate-blanchett', birth_year: 1969 }
+    ];
+  }
+  return DataService.getAllActors();
+};
+
+// Fetch a single actor by slug
+export const getActorBySlug = async (slug) => {
+  if (USE_MOCK_DATA) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const actors = await getAllActors();
+    return actors.find(a => a.slug === slug) || null;
+  }
+  return DataService.getActorBySlug(slug);
+};
+
+/**
+ * ============================================================================
+ * COLLECTION API FUNCTIONS
+ * ============================================================================
+ */
+
+// Fetch all collections
+export const getAllCollections = async () => {
+  if (USE_MOCK_DATA) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    // Mock collections data
+    return [
+      {
+        uid: 'collection_1',
+        title: 'Top 10 This Week',
+        slug: 'top-10-this-week',
+        description: 'The most popular movies this week',
+        movies: MOCK_MOVIES.slice(0, 10)
+      },
+      {
+        uid: 'collection_2',
+        title: 'Oscar Winners',
+        slug: 'oscar-winners',
+        description: 'Award-winning films',
+        movies: MOCK_MOVIES.filter(m => m.rating >= 4.5)
+      }
+    ];
+  }
+  return DataService.getAllCollections();
+};
+
+// Fetch a single collection by slug
+export const getCollectionBySlug = async (slug) => {
+  if (USE_MOCK_DATA) {
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const collections = await getAllCollections();
+    return collections.find(c => c.slug === slug) || null;
+  }
+  return DataService.getCollectionBySlug(slug);
 };
 
 /**
@@ -618,11 +725,16 @@ export const calculateAverageRating = (reviews) => {
 export default {
   getAllMovies,
   getFeaturedMovies,
+  getUpcomingMovies,
   getMovieBySlug,
   getMoviesByGenre,
   searchMovies,
   getAllDirectors,
   getDirectorBySlug,
+  getAllActors,
+  getActorBySlug,
+  getAllCollections,
+  getCollectionBySlug,
   getAllGenres,
   getGenreBySlug,
   getReviewsByMovie,

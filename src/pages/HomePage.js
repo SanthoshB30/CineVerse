@@ -1,18 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getAllGenres, getAllDirectors } from '../api/contentstack';
+import { getImageUrl } from '../api/contentstack';
 import { getAllMovies } from '../services/dataService';
 import MovieCard from '../components/MovieCard';
-import { getImageUrl } from '../api/contentstack';
 
 const HomePage = () => {
-  const [genres, setGenres] = useState([]);
-  const [directors, setDirectors] = useState([]);
   const [allMovies, setAllMovies] = useState([]);
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [currentTrendingIndex, setCurrentTrendingIndex] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
     loadData();
@@ -30,14 +26,7 @@ const HomePage = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [genresData, directorsData, moviesData] = await Promise.all([
-        getAllGenres(),
-        getAllDirectors(),
-        getAllMovies()
-      ]);
-      
-      setGenres(genresData);
-      setDirectors(directorsData.slice(0, 10)); // Show first 10 directors
+      const moviesData = await getAllMovies();
       setAllMovies(moviesData);
       
       // Get trending movies (highest rated or featured)
@@ -130,71 +119,10 @@ const HomePage = () => {
         </div>
       </div>
 
-      {/* Main Content with Sidebar */}
-      <div className="home-main-content">
-        {/* Sidebar */}
-        <aside className={`home-sidebar ${sidebarOpen ? 'open' : 'closed'}`}>
-          <button 
-            className="sidebar-toggle"
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-          >
-            {sidebarOpen ? '‹' : '›'}
-          </button>
-
-          {sidebarOpen && (
-            <div className="sidebar-content">
-              {/* Genres Section */}
-              <div className="sidebar-section">
-                <h3 className="sidebar-title">🎭 Genres</h3>
-                <ul className="sidebar-list">
-                  {genres.map(genre => (
-                    <li key={genre.uid}>
-                      <Link to={`/genre/${genre.slug}`} className="sidebar-link">
-                        {genre.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* Directors Section */}
-              <div className="sidebar-section">
-                <h3 className="sidebar-title">🎬 Directors</h3>
-                <ul className="sidebar-list">
-                  {directors.map(director => (
-                    <li key={director.uid}>
-                      <Link to={`/director/${director.slug}`} className="sidebar-link">
-                        {director.name}
-                      </Link>
-                    </li>
-                  ))}
-                  {directors.length > 0 && (
-                    <li>
-                      <Link to="/directors" className="sidebar-link view-all">
-                        View All Directors →
-                      </Link>
-                    </li>
-                  )}
-                </ul>
-              </div>
-
-              {/* Actors Section */}
-              <div className="sidebar-section">
-                <h3 className="sidebar-title">⭐ Actors</h3>
-                <ul className="sidebar-list">
-                  <li>
-                    <Link to="/actors" className="sidebar-link">
-                      Browse All Actors
-                    </Link>
-                  </li>
-                </ul>
-              </div>
-            </div>
-          )}
-        </aside>
-
-        {/* Movies Grid */}
-        <div className="home-movies-section">
+      {/* Main Content - Movies Only */}
+      <div className="home-content-full">
+        {/* All Movies Section */}
+        <section className="home-movies-only-section">
           <div className="section-header">
             <h2 className="section-title">All Movies</h2>
             <p className="section-subtitle">{allMovies.length} movies available</p>
@@ -214,7 +142,7 @@ const HomePage = () => {
               <p>Check back later for new additions!</p>
             </div>
           )}
-        </div>
+        </section>
       </div>
     </div>
   );

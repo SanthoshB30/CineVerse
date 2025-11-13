@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import LogoHeader from '../components/LogoHeader';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -52,10 +53,7 @@ const LoginPage = () => {
   return (
     <div className="login-page">
       <div className="login-container">
-        <div className="login-header">
-          <h1 className="login-logo">🎬 CineVerse</h1>
-          <p className="login-subtitle">Your Universe of Cinema</p>
-        </div>
+        <LogoHeader subtitle="Your Universe of Cinema" />
 
         <form className="login-form" onSubmit={handleSubmit}>
           <div className="form-group">

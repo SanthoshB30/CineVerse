@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getUpcomingMovies, getImageUrl } from '../api/contentstack';
 
 const AVATAR_OPTIONS = [
   '👤', '🎭', '🎬', '🎪', '🎨', '🎯', '🎮', '🎲',
@@ -19,30 +20,67 @@ const CreateProfilePage = () => {
   const navigate = useNavigate();
   const { user, updateUserProfiles, selectProfile } = useAuth();
 
-  // Simulated upcoming movies slideshow
-  const upcomingMoviesImages = [
-    'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?w=1920&h=1080&fit=crop',
-    'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1920&h=1080&fit=crop',
-    'https://images.unsplash.com/photo-1574267432644-f909a57bc26d?w=1920&h=1080&fit=crop',
-    'https://images.unsplash.com/photo-1616530940355-351fabd9524b?w=1920&h=1080&fit=crop',
-    'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1920&h=1080&fit=crop'
-  ];
-
+  // Fetch upcoming movies from Contentstack
   useEffect(() => {
-    setBackgroundImages(upcomingMoviesImages);
+    loadUpcomingMovies();
     
     // Load existing profiles if any
     if (user?.profiles) {
       setProfiles(user.profiles);
     }
-
-    // Slideshow rotation
-    const interval = setInterval(() => {
-      setCurrentImageIndex((prev) => (prev + 1) % upcomingMoviesImages.length);
-    }, 4000);
-
-    return () => clearInterval(interval);
   }, [user]);
+
+  // Slideshow rotation
+  useEffect(() => {
+    if (backgroundImages.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % backgroundImages.length);
+      }, 4000);
+      return () => clearInterval(interval);
+    }
+  }, [backgroundImages]);
+
+  const loadUpcomingMovies = async () => {
+    try {
+      const upcomingMovies = await getUpcomingMovies();
+      
+      // Extract backdrop/banner images from upcoming movies
+      if (upcomingMovies && upcomingMovies.length > 0) {
+        const images = upcomingMovies
+          .map(movie => getImageUrl(movie.banner_image) || getImageUrl(movie.poster_image))
+          .filter(url => url !== null)
+          .slice(0, 5);
+        
+        // If we have images from Contentstack, use them; otherwise use fallback
+        if (images.length > 0) {
+          setBackgroundImages(images);
+        } else {
+          // Fallback images
+          setBackgroundImages([
+            'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?w=1920&h=1080&fit=crop',
+            'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1920&h=1080&fit=crop',
+            'https://images.unsplash.com/photo-1574267432644-f909a57bc26d?w=1920&h=1080&fit=crop',
+            'https://images.unsplash.com/photo-1616530940355-351fabd9524b?w=1920&h=1080&fit=crop',
+            'https://images.unsplash.com/photo-1485846234645-a62644f84728?w=1920&h=1080&fit=crop'
+          ]);
+        }
+      } else {
+        // Fallback if no upcoming movies
+        setBackgroundImages([
+          'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?w=1920&h=1080&fit=crop',
+          'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1920&h=1080&fit=crop',
+          'https://images.unsplash.com/photo-1574267432644-f909a57bc26d?w=1920&h=1080&fit=crop'
+        ]);
+      }
+    } catch (error) {
+      console.error('Error loading upcoming movies:', error);
+      // Use fallback images on error
+      setBackgroundImages([
+        'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?w=1920&h=1080&fit=crop',
+        'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1920&h=1080&fit=crop'
+      ]);
+    }
+  };
 
   const handleCreateProfile = () => {
     if (!newProfileName.trim()) {
