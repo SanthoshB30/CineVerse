@@ -61,6 +61,7 @@ class DataStore {
     this.actors = [];
     this.collections = [];
     this.reviews = [];
+    this.appSettings = null;
     this.isInitialized = false;
     this.initializationPromise = null;
   }
@@ -102,6 +103,7 @@ class DataStore {
       // Fetch all content types sequentially to see which one fails
       console.log('\n📦 Fetching content types...\n');
       
+      const appSettings = await this._fetchAppSettings();
       const directors = await this._fetchDirectors();
       const genres = await this._fetchGenres();
       const actors = await this._fetchActors();
@@ -110,6 +112,7 @@ class DataStore {
       const reviews = await this._fetchReviews();
 
       // Store in memory
+      this.appSettings = appSettings;
       this.directors = directors;
       this.genres = genres;
       this.actors = actors;
@@ -126,6 +129,7 @@ class DataStore {
 
       console.log('-----------------------------------');
       console.log(`✅ Data loaded successfully from Contentstack in ${loadTime}s:`);
+      console.log(`   - App Settings: ${this.appSettings ? '✓' : '✗'}`);
       console.log(`   - Directors: ${this.directors.length}`);
       console.log(`   - Genres: ${this.genres.length}`);
       console.log(`   - Actors: ${this.actors.length}`);
@@ -167,6 +171,35 @@ class DataStore {
         message: 'Failed to load data from Contentstack: ' + error.message,
         error: error.message
       };
+    }
+  }
+
+  /**
+   * Fetch App Settings from Contentstack
+   */
+  async _fetchAppSettings() {
+    try {
+      console.log('📋 Fetching app settings...');
+      const Query = Stack.ContentType('app_settings').Query();
+      const result = await Query.toJSON().find();
+      
+      const entries = result[0] || [];
+      console.log(`   Found ${entries.length} app settings entries`);
+      
+      // Return the first entry (singleton)
+      if (entries.length > 0) {
+        return {
+          uid: entries[0].uid,
+          title: entries[0].title,
+          theme_colors: entries[0].theme_colors || {},
+          background_image: entries[0].background_image
+        };
+      }
+      return null;
+    } catch (error) {
+      console.error('❌ Error fetching app settings:', error.message || error);
+      console.error('   Full error:', error);
+      return null;
     }
   }
 
@@ -232,20 +265,75 @@ class DataStore {
     try {
       console.log('📋 Fetching actors...');
       const Query = Stack.ContentType('actor').Query();
-      const result = await Query.toJSON().find();
+      
+      // Include the movies reference - movies is an array inside each filmography group item
+      const result = await Query
+        .includeReference(['filmography.movies'])
+        .includeReference(['filmography.movies.genre'])
+        .includeReference(['filmography.movies.director'])
+        .toJSON()
+        .find();
       
       const entries = result[0] || [];
       console.log(`   Found ${entries.length} actors`);
       
-      return entries.map(entry => ({
-        uid: entry.uid,
-        title: entry.title || entry.name,
-        name: entry.name,
-        slug: entry.slug,
-        bio: entry.bio,
-        birth_year: entry.birth_year,
-        profile_image: entry.profile_image
-      }));
+      return entries.map(entry => {
+        // Extract movies from filmography group (which is an array of groups)
+        let movies = [];
+        
+        if (entry.filmography && Array.isArray(entry.filmography)) {
+          // Each filmography item is a group with a movies array
+          entry.filmography.forEach((filmItem, index) => {
+            // movies is an array inside each filmography group item
+            if (filmItem.movies && Array.isArray(filmItem.movies)) {
+              filmItem.movies.forEach(movie => {
+                // Check if movie is fully populated (has title) or just a reference (only uid)
+                if (!movie.title) {
+                  console.log(`   ⚠️  ${entry.name}: Movie reference not populated, only has:`, Object.keys(movie));
+                  return;
+                }
+                
+                // Movie is fully populated, add it
+                movies.push({
+                  uid: movie.uid,
+                  title: movie.title,
+                  slug: movie.slug,
+                  description: movie.description,
+                  release_year: movie.release_year,
+                  duration: movie.duration,
+                  rating: movie.rating,
+                  featured: movie.featured || false,
+                  poster_image: movie.poster_image,
+                  banner_image: movie.banner_image,
+                  trailer_url: movie.trailer_url,
+                  streaming_links: movie.streaming_links || [],
+                  genre: Array.isArray(movie.genre) ? movie.genre : [],
+                  director: Array.isArray(movie.director) ? movie.director : []
+                });
+                
+                console.log(`   ✓ Added movie: ${movie.title} (poster: ${movie.poster_image ? 'yes' : 'no'})`);
+              });
+            }
+          });
+          
+          if (movies.length > 0) {
+            console.log(`   ✅ ${entry.name}: ${movies.length} movie(s) loaded`);
+          } else {
+            console.log(`   ⚠️  ${entry.name}: No movies loaded (check if movies are published)`);
+          }
+        }
+        
+        return {
+          uid: entry.uid,
+          title: entry.title || entry.name,
+          name: entry.name,
+          slug: entry.slug,
+          bio: entry.bio,
+          birth_year: entry.birth_year,
+          profile_image: entry.profile_image,
+          movies: movies
+        };
+      });
     } catch (error) {
       console.error('❌ Error fetching actors:', error.message || error);
       console.error('   Full error:', error);
@@ -328,7 +416,7 @@ class DataStore {
   async _fetchReviews() {
     try {
       console.log('📋 Fetching reviews...');
-      const Query = Stack.ContentType('review').Query();
+      const Query = Stack.ContentType('reviewnew').Query();
       const result = await Query
         .includeReference('movie')
         .toJSON()
@@ -344,7 +432,9 @@ class DataStore {
         review_text: entry.review_text,
         review_date: entry.review_date,
         movie: entry.movie?.[0] || null,
-        movie_uid: entry.movie?.[0]?.uid || null
+        movie_uid: entry.movie?.[0]?.uid || null,
+        upvotes: entry.upvotes || 0,
+        downvotes: entry.downvotes || 0
       }));
     } catch (error) {
       console.error('❌ Error fetching reviews:', error.message || error);
@@ -376,6 +466,7 @@ class DataStore {
   getStats() {
     return {
       isInitialized: this.isInitialized,
+      appSettings: !!this.appSettings,
       movies: this.movies.length,
       genres: this.genres.length,
       directors: this.directors.length,
@@ -383,6 +474,13 @@ class DataStore {
       collections: this.collections.length,
       reviews: this.reviews.length
     };
+  }
+
+  /**
+   * Get app settings
+   */
+  getAppSettings() {
+    return this.appSettings;
   }
 }
 
@@ -421,6 +519,13 @@ export const isDataStoreReady = () => {
  */
 export const getDataStoreStats = () => {
   return dataStore.getStats();
+};
+
+/**
+ * Get app settings
+ */
+export const getAppSettings = () => {
+  return dataStore.getAppSettings();
 };
 
 /**
@@ -765,6 +870,7 @@ export default {
   refreshDataStore,
   isDataStoreReady,
   getDataStoreStats,
+  getAppSettings,
   
   // Movies
   getAllMovies,

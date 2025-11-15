@@ -2,20 +2,15 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import SearchBar from './SearchBar';
+import UserMenu from './UserMenu';
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const handleSearch = (searchTerm) => {
     navigate(`/search?q=${encodeURIComponent(searchTerm)}`);
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
   };
 
   return (
@@ -35,29 +30,8 @@ const Navigation = () => {
         <div className="nav-right">
           <SearchBar onSearch={handleSearch} />
           
-          {/* User Menu */}
-          <div className="nav-user-menu">
-            <button 
-              className="user-menu-button"
-              onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-              aria-label="User menu"
-            >
-              👤 {user?.username}
-            </button>
-            {isUserMenuOpen && (
-              <div className="user-menu-dropdown">
-                <div className="user-menu-header">
-                  <strong>{user?.username}</strong>
-                </div>
-                <button 
-                  className="user-menu-item logout-button"
-                  onClick={handleLogout}
-                >
-                  🚪 Logout
-                </button>
-              </div>
-            )}
-          </div>
+          {/* User Menu with Hamburger */}
+          <UserMenu />
           
           <button 
             className="nav-toggle"

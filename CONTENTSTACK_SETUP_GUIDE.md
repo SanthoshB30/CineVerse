@@ -65,6 +65,7 @@
 | bio | Rich Text Editor | - | No | Biography |
 | birth_year | Number | Integer | No | Birth year |
 | profile_image | File | Accept: Images only | No | Profile photo |
+| movies | Reference | Multiple, Content Type: Movie | No | Movies the actor has appeared in |
 
 ---
 
@@ -82,7 +83,7 @@
 
 ---
 
-### 6. Review Content Type
+### 6. Review Content Type 🔄 UPDATED
 
 **Content Type UID:** `review`
 
@@ -93,6 +94,14 @@
 | review_text | Multi Line Textbox | - | ✅ Yes | Review content |
 | review_date | Date | - | No | Date of review |
 | movie | Reference | Single, Content Type: Movie | ✅ Yes | Movie being reviewed |
+| upvotes | Number | Integer, Min: 0, Default: 0 | No | Number of users who found this review helpful |
+| downvotes | Number | Integer, Min: 0, Default: 0 | No | Number of users who did not find this review helpful |
+
+**⚡ Contentstack Automate Integration:**
+- Use `upvotes` and `downvotes` fields for voting workflows
+- Trigger automations on vote count changes
+- Build leaderboards and reputation systems
+- Send notifications when reviews get engagement
 
 ---
 
@@ -167,6 +176,7 @@ Slug: tom-hanks
 Bio: Thomas Jeffrey Hanks is an American actor and filmmaker...
 Birth Year: 1956
 Profile Image: [Upload photo]
+Movies: [Reference to Forrest Gump, Cast Away, Saving Private Ryan, etc.]
 ```
 
 #### Sample Collection Entry:
@@ -248,6 +258,7 @@ The app will:
 ### Movie Relationships:
 - **Movie** → **Genre** (Multiple genres per movie)
 - **Movie** → **Director** (Multiple directors per movie)
+- **Movie** ← **Actor** (Actors reference multiple movies they appeared in)
 - **Review** → **Movie** (Each review references one movie)
 - **Collection** → **Movie** (Collections contain multiple movies)
 
@@ -255,8 +266,9 @@ The app will:
 1. **Home Page** displays featured movies
 2. **Genre Page** shows movies filtered by genre
 3. **Director Page** shows movies directed by that director
-4. **Movie Detail** shows related genres, directors, and reviews
-5. **Collection Page** shows grouped movies from the collection
+4. **Actor Page** shows movies the actor has appeared in (filmography)
+5. **Movie Detail** shows related genres, directors, actors, and reviews
+6. **Collection Page** shows grouped movies from the collection
 
 ---
 
@@ -300,6 +312,7 @@ For a good demo:
 - `bio` - Biography on actor page
 - `birth_year` - "Born 1956"
 - `profile_image` - Circular profile photo
+- `movies` - List of movies the actor has appeared in (filmography)
 
 ---
 
@@ -396,6 +409,283 @@ If you encounter issues:
 5. **Review Data Structure:**
    - Ensure field names match exactly
    - Check that references are properly linked
+
+---
+
+## ⚡ Contentstack Automate: Review Voting System
+
+### Review Content Type - Complete JSON Schema
+
+Use this JSON schema to import/create the Review content type with voting support:
+
+```json
+{
+  "content_type": {
+    "title": "Review",
+    "uid": "review",
+    "description": "Movie reviews and ratings by users or AI profiles",
+    "schema": [
+      {
+        "display_name": "Reviewer Name",
+        "uid": "reviewer_name",
+        "data_type": "text",
+        "mandatory": true
+      },
+      {
+        "display_name": "Rating",
+        "uid": "rating",
+        "data_type": "number",
+        "mandatory": true,
+        "field_metadata": {
+          "min": 1,
+          "max": 5,
+          "description": "Rating out of 5"
+        }
+      },
+      {
+        "display_name": "Review Text",
+        "uid": "review_text",
+        "data_type": "text",
+        "mandatory": true,
+        "field_metadata": {
+          "multiline": true
+        }
+      },
+      {
+        "display_name": "Review Date",
+        "uid": "review_date",
+        "data_type": "isodate",
+        "mandatory": false
+      },
+      {
+        "display_name": "Movie",
+        "uid": "movie",
+        "data_type": "reference",
+        "mandatory": true,
+        "multiple": false,
+        "reference_to": ["movie"],
+        "field_metadata": {
+          "description": "Select the movie being reviewed"
+        }
+      },
+      {
+        "display_name": "Upvotes",
+        "uid": "upvotes",
+        "data_type": "number",
+        "mandatory": false,
+        "field_metadata": {
+          "default_value": 0,
+          "description": "Number of users who found this review helpful"
+        }
+      },
+      {
+        "display_name": "Downvotes",
+        "uid": "downvotes",
+        "data_type": "number",
+        "mandatory": false,
+        "field_metadata": {
+          "default_value": 0,
+          "description": "Number of users who did not find this review helpful"
+        }
+      }
+    ],
+    "options": {
+      "title": "reviewer_name",
+      "publishable": true,
+      "is_page": false,
+      "singleton": false,
+      "sub_title": ["rating", "review_text"],
+      "url_pattern": "/review/:uid",
+      "url_prefix": "/"
+    }
+  }
+}
+```
+
+### Automate Workflow Examples
+
+#### 1. 🏆 Top Review Notification
+
+**Trigger:** Entry Update (Review)
+**Condition:** When `upvotes` field changes
+**Actions:**
+
+```javascript
+// Check if review has reached top status
+if (review.upvotes >= 10) {
+  // Update a "Top Review" collection
+  await stack.ContentType("collection")
+    .Entry("top_reviews_uid")
+    .update({
+      reviews: [...existingReviews, review.uid]
+    });
+  
+  // Send notification
+  await sendNotification({
+    channel: "slack",
+    message: `🌟 Review by ${review.reviewer_name} on "${review.movie.title}" reached ${review.upvotes} upvotes!`
+  });
+}
+```
+
+#### 2. 📊 Reviewer Reputation System
+
+**Trigger:** Entry Update (Review)
+**Condition:** When `upvotes` or `downvotes` changes
+**Actions:**
+
+```javascript
+// Calculate net score
+const netScore = review.upvotes - review.downvotes;
+const helpfulnessRatio = review.upvotes / (review.upvotes + review.downvotes + 1);
+
+// Update reviewer profile/badge
+if (helpfulnessRatio > 0.8 && review.upvotes > 20) {
+  await assignBadge(review.reviewer_name, "trusted_reviewer");
+}
+
+// Log analytics
+await logToAnalytics({
+  event: "review_engagement",
+  reviewer: review.reviewer_name,
+  movie: review.movie.title,
+  netScore: netScore
+});
+```
+
+#### 3. 🔄 Real-time Vote Update via API
+
+**Frontend Implementation:**
+
+```javascript
+// When user clicks upvote
+const handleUpvote = async (reviewUid) => {
+  const review = await fetch(`/api/review/${reviewUid}`);
+  
+  await stack.ContentType("review")
+    .Entry(reviewUid)
+    .update({
+      upvotes: review.upvotes + 1
+    });
+  
+  // Re-fetch reviews to show updated count
+  refreshReviews();
+};
+```
+
+#### 4. 📧 Weekly Top Reviews Digest
+
+**Trigger:** Scheduled (Every Monday 9 AM)
+**Actions:**
+
+```javascript
+// Get all reviews from past week
+const reviews = await stack.ContentType("review")
+  .Query()
+  .where("review_date", {
+    $gte: getLastWeekDate()
+  })
+  .find();
+
+// Sort by engagement
+const topReviews = reviews
+  .sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes))
+  .slice(0, 10);
+
+// Send email digest
+await sendEmailDigest({
+  subject: "Top 10 Movie Reviews This Week",
+  reviews: topReviews
+});
+```
+
+### Setting Up Automation in Contentstack
+
+1. **Navigate to Automate:**
+   - Go to Contentstack Dashboard
+   - Click on **Automate** in the sidebar
+
+2. **Create New Workflow:**
+   - Click **+ New Workflow**
+   - Name: "Review Vote Notification"
+   - Description: "Notify when reviews get upvotes"
+
+3. **Configure Trigger:**
+   - Type: Entry Update
+   - Content Type: Review
+   - Condition: `upvotes` field changes
+
+4. **Add Actions:**
+   - Webhook to your backend
+   - Slack notification
+   - Email notification
+   - Update related entries
+
+5. **Test & Deploy:**
+   - Use test entries to verify workflow
+   - Monitor execution logs
+   - Adjust conditions as needed
+
+### API Usage Examples
+
+#### Fetch Reviews with Vote Counts
+
+```javascript
+const reviews = await stack.ContentType("review")
+  .Query()
+  .includeReference("movie")
+  .addParam("include_count", true)
+  .find();
+
+reviews.forEach(review => {
+  console.log(`${review.reviewer_name}: ${review.upvotes}↑ ${review.downvotes}↓`);
+});
+```
+
+#### Update Vote Count
+
+```javascript
+// Upvote
+await stack.ContentType("review")
+  .Entry(reviewUid)
+  .fetch()
+  .then(entry => {
+    entry.upvotes = (entry.upvotes || 0) + 1;
+    return entry.update();
+  });
+
+// Downvote
+await stack.ContentType("review")
+  .Entry(reviewUid)
+  .fetch()
+  .then(entry => {
+    entry.downvotes = (entry.downvotes || 0) + 1;
+    return entry.update();
+  });
+```
+
+#### Get Top Rated Reviews
+
+```javascript
+const topReviews = await stack.ContentType("review")
+  .Query()
+  .includeReference("movie")
+  .addQuery("upvotes", { $gte: 10 })
+  .addParam("order_by", "-upvotes")
+  .limit(10)
+  .find();
+```
+
+### Benefits of This Setup
+
+✅ **Engagement Tracking:** Monitor which reviews users find helpful
+✅ **Quality Control:** Surface the most valuable reviews
+✅ **Community Building:** Reward helpful reviewers
+✅ **Content Moderation:** Flag reviews with high downvotes
+✅ **Analytics:** Track review engagement metrics
+✅ **Automated Workflows:** Trigger actions based on votes
+✅ **Leaderboards:** Create "Top Reviewer" rankings
+✅ **Notifications:** Alert teams about trending reviews
 
 ---
 

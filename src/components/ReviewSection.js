@@ -1,19 +1,48 @@
 import React, { useEffect, useState } from 'react';
 import { getReviewsByMovie, formatDate } from '../api/contentstack';
+import { mergeVotesWithReviews } from '../api/reviewVoting';
+import ReviewVoteButtons from './ReviewVoteButtons';
 
 const ReviewSection = ({ movieUid }) => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     loadReviews();
-  }, [movieUid]);
+  }, [movieUid, refreshKey]);
+
+  // Listen for data refresh events
+  useEffect(() => {
+    const handleDataRefresh = () => {
+      console.log('🔄 Data refreshed, reloading reviews...');
+      setRefreshKey(prev => prev + 1);
+    };
+
+    window.addEventListener('dataRefreshed', handleDataRefresh);
+    return () => window.removeEventListener('dataRefreshed', handleDataRefresh);
+  }, []);
 
   const loadReviews = async () => {
     setLoading(true);
     const reviewsData = await getReviewsByMovie(movieUid);
-    setReviews(reviewsData);
+    // Merge with cached vote counts from localStorage
+    const reviewsWithVotes = mergeVotesWithReviews(reviewsData);
+    setReviews(reviewsWithVotes);
     setLoading(false);
+  };
+
+  /**
+   * Handle vote update from child component
+   */
+  const handleVoteUpdate = (reviewUid, newUpvotes, newDownvotes) => {
+    setReviews(prevReviews =>
+      prevReviews.map(review =>
+        review.uid === reviewUid
+          ? { ...review, upvotes: newUpvotes, downvotes: newDownvotes }
+          : review
+      )
+    );
   };
 
   const renderStars = (rating) => {
@@ -51,7 +80,7 @@ const ReviewSection = ({ movieUid }) => {
                   </div>
                   <div>
                     <h4 className="reviewer-name">{review.reviewer_name}</h4>
-                    <span className="review-date">{formatDate(review.date)}</span>
+                    <span className="review-date">{formatDate(review.review_date)}</span>
                   </div>
                 </div>
                 <div className="review-rating">
@@ -59,6 +88,12 @@ const ReviewSection = ({ movieUid }) => {
                 </div>
               </div>
               <p className="review-text">{review.review_text}</p>
+              
+              {/* Interactive vote buttons */}
+              <ReviewVoteButtons 
+                review={review} 
+                onVoteUpdate={handleVoteUpdate}
+              />
             </div>
           ))}
         </div>

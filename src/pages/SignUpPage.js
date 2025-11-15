@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import LogoHeader from '../components/LogoHeader';
@@ -8,8 +8,17 @@ const SignUpPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [backgroundImage, setBackgroundImage] = useState('');
   const navigate = useNavigate();
   const { signup } = useAuth();
+
+  // Load background image from app settings
+  useEffect(() => {
+    const bgImage = window.__CINEVERSE_BG_IMAGE__;
+    if (bgImage) {
+      setBackgroundImage(bgImage);
+    }
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -107,7 +116,15 @@ const SignUpPage = () => {
         </form>
       </div>
 
-      <div className="signup-background">
+      <div 
+        className="signup-background" 
+        style={backgroundImage ? {
+          backgroundImage: `url(${backgroundImage})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
+        } : {}}
+      >
         <div className="background-overlay"></div>
       </div>
     </div>

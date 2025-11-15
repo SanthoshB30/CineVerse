@@ -36,6 +36,7 @@ export const initializeData = DataService.initializeDataStore;
 export const refreshData = DataService.refreshDataStore;
 export const isDataReady = DataService.isDataStoreReady;
 export const getDataStats = DataService.getDataStoreStats;
+export const getAppSettings = DataService.getAppSettings;
 
 /**
  * MOCK DATA FOR DEMO
@@ -744,6 +745,7 @@ export default {
   getMoviesByGenreName,
   getImageUrl,
   formatDate,
-  calculateAverageRating
+  calculateAverageRating,
+  getAppSettings
 };
 

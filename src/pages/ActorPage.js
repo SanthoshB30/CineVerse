@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getActorBySlug, getImageUrl } from '../api/contentstack';
+import MovieCard from '../components/MovieCard';
 
 const ActorPage = () => {
   const { slug } = useParams();
@@ -62,9 +63,17 @@ const ActorPage = () => {
 
       <div className="actor-filmography">
         <h2>Filmography</h2>
-        <div className="coming-soon-notice">
-          <p>🎬 Filmography coming soon! This feature will show all movies featuring {actor.name}.</p>
-        </div>
+        {actor.movies && actor.movies.length > 0 ? (
+          <div className="movies-grid">
+            {actor.movies.map((movie) => (
+              <MovieCard key={movie.uid} movie={movie} />
+            ))}
+          </div>
+        ) : (
+          <div className="coming-soon-notice">
+            <p>🎬 No movies available yet. Link movies to {actor.name} in Contentstack to display their filmography here.</p>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -5,10 +5,13 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Navigation from './components/Navigation';
 import ChatBot from './components/ChatBot';
 import DataInitializer from './components/DataInitializer';
+import ThemeInitializer from './components/ThemeInitializer';
 import LoginPage from './pages/LoginPage';
 import SignUpPage from './pages/SignUpPage';
 import CreateProfilePage from './pages/CreateProfilePage';
 import SelectProfilePage from './pages/SelectProfilePage';
+import SwitchProfilePage from './pages/SwitchProfilePage';
+import AccountSettingsPage from './pages/AccountSettingsPage';
 import HomePage from './pages/HomePage';
 import MovieDetailPage from './pages/MovieDetailPage';
 import DirectorPage from './pages/DirectorPage';
@@ -27,6 +30,7 @@ function App() {
     <Router>
       <AuthProvider>
         <DataInitializer>
+          <ThemeInitializer />
           <div className="App">
             <Routes>
               {/* Default route - redirect to login */}
@@ -46,6 +50,26 @@ function App() {
               {/* Semi-protected routes - Profile Management */}
               <Route path="/create-profile" element={<CreateProfilePage />} />
               <Route path="/select-profile" element={<SelectProfilePage />} />
+              <Route path="/profiles" element={<CreateProfilePage />} />
+              <Route path="/switch-profile" element={
+                <ProtectedRoute>
+                  <SwitchProfilePage />
+                </ProtectedRoute>
+              } />
+              <Route path="/account" element={
+                <ProtectedRoute>
+                  <>
+                    <Navigation />
+                    <main className="main-content">
+                      <AccountSettingsPage />
+                    </main>
+                    <ChatBot />
+                    <footer className="footer">
+                      <p>&copy; 2025 CineVerse. Your Universe of Cinema.</p>
+                    </footer>
+                  </>
+                </ProtectedRoute>
+              } />
               
               {/* Protected routes - Main App */}
               <Route path="/home" element={
