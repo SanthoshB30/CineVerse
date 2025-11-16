@@ -4,18 +4,30 @@ import { getImageUrl } from '../api/contentstack';
 import { getAllMovies } from '../services/dataService';
 import MovieCard from '../components/MovieCard';
 import { trackHomePage } from '../services/analytics';
+import { usePersonalization } from '../personalize/usePersonalization';
 
 const HomePage = () => {
   const [allMovies, setAllMovies] = useState([]);
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [currentTrendingIndex, setCurrentTrendingIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  
+  // Get personalization variant
+  const { variant, loading: variantLoading } = usePersonalization();
 
   useEffect(() => {
     loadData();
     // Track home page visit
     trackHomePage();
   }, []);
+
+  // Reload data when variant changes
+  useEffect(() => {
+    if (variant && !variantLoading) {
+      console.log('🔄 Variant changed, reloading data with personalization');
+      loadData();
+    }
+  }, [variant]);
 
   useEffect(() => {
     if (trendingMovies.length > 0) {
@@ -30,14 +42,50 @@ const HomePage = () => {
     setLoading(true);
     try {
       const moviesData = await getAllMovies();
-      setAllMovies(moviesData);
+      
+      // Apply personalization based on variant
+      let personalizedMovies = moviesData;
+      
+      if (variant) {
+        console.log('🎬 Applying variant-based filtering:', variant.id);
+        
+        // Kids variant - show only kid-friendly content
+        if (variant.id === 'kids-variant' || variant.id === 'kids_content') {
+          personalizedMovies = moviesData.filter(movie => 
+            movie.age_rating === 'U' || movie.age_rating === 'PG' || !movie.age_rating
+          );
+          console.log(`✅ Kids filter: ${personalizedMovies.length} kid-safe movies`);
+        }
+        
+        // Tamil variant - prioritize Tamil movies
+        else if (variant.id === 'tamil-variant' || variant.id === 'tamil_movies') {
+          const tamilMovies = moviesData.filter(m => m.language === 'tamil' || m.language === 'Tamil');
+          const otherMovies = moviesData.filter(m => m.language !== 'tamil' && m.language !== 'Tamil');
+          personalizedMovies = [...tamilMovies, ...otherMovies];
+          console.log(`✅ Tamil prioritization: ${tamilMovies.length} Tamil movies first`);
+        }
+        
+        // Action variant - prioritize action movies
+        else if (variant.id === 'action-variant' || variant.id === 'action_genre') {
+          const actionMovies = moviesData.filter(m => 
+            m.genre?.some(g => g.name?.toLowerCase() === 'action')
+          );
+          const otherMovies = moviesData.filter(m => 
+            !m.genre?.some(g => g.name?.toLowerCase() === 'action')
+          );
+          personalizedMovies = [...actionMovies, ...otherMovies];
+          console.log(`✅ Action prioritization: ${actionMovies.length} action movies first`);
+        }
+      }
+      
+      setAllMovies(personalizedMovies);
       
       // Get trending movies (highest rated or featured)
-      const trending = moviesData
+      const trending = personalizedMovies
         .filter(movie => movie.rating >= 4.0)
         .sort((a, b) => b.rating - a.rating)
         .slice(0, 5);
-      setTrendingMovies(trending.length > 0 ? trending : moviesData.slice(0, 5));
+      setTrendingMovies(trending.length > 0 ? trending : personalizedMovies.slice(0, 5));
     } catch (error) {
       console.error('Error loading data:', error);
     }
@@ -56,11 +104,11 @@ const HomePage = () => {
     );
   };
 
-  if (loading) {
+  if (loading || variantLoading) {
     return (
       <div className="loading-screen">
         <div className="loader"></div>
-        <p>Loading CineVerse...</p>
+        <p>{variantLoading ? 'Personalizing content...' : 'Loading CineVerse...'}</p>
       </div>
     );
   }
@@ -127,8 +175,16 @@ const HomePage = () => {
         {/* All Movies Section */}
         <section className="home-movies-only-section">
           <div className="section-header">
-            <h2 className="section-title">All Movies</h2>
-            <p className="section-subtitle">{allMovies.length} movies available</p>
+            <h2 className="section-title">
+              {variant?.id === 'kids-variant' || variant?.id === 'kids_content' ? '👶 Kids Movies' :
+               variant?.id === 'tamil-variant' || variant?.id === 'tamil_movies' ? '🎬 Tamil Movies' :
+               variant?.id === 'action-variant' || variant?.id === 'action_genre' ? '💥 Action Movies' :
+               'All Movies'}
+            </h2>
+            <p className="section-subtitle">
+              {allMovies.length} movies available
+              {variant && <span style={{ marginLeft: '10px', color: '#6C5CE7' }}>• Personalized for you</span>}
+            </p>
           </div>
 
           {allMovies.length > 0 ? (

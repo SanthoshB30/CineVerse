@@ -1,11 +1,9 @@
 /**
  * Contentstack Personalize SDK Initialization
  * 
- * Initializes the Personalize SDK and makes it globally available
- * as window.csPersonalize for use throughout the application
+ * Initializes the Personalize SDK using the browser SDK loaded from CDN
+ * Makes it globally available as window.csPersonalize
  */
-
-import Personalize from '@contentstack/personalize-edge-sdk';
 
 /**
  * Initialize Personalize SDK
@@ -18,6 +16,22 @@ export async function initPersonalize() {
     return null;
   }
 
+  // Wait for SDK to be available from CDN
+  const maxAttempts = 50; // Wait up to 5 seconds
+  let attempts = 0;
+  
+  while (!window.ContentstackPersonalize && attempts < maxAttempts) {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    attempts++;
+  }
+
+  if (!window.ContentstackPersonalize) {
+    console.error('❌ Contentstack Personalize SDK not loaded from CDN');
+    console.error('   Make sure the script tag is in index.html:');
+    console.error('   <script src="https://cdn.contentstack.io/personalize/latest/personalize.min.js"></script>');
+    return null;
+  }
+
   // Return existing instance if already initialized
   if (window.csPersonalize) {
     console.log('✅ Personalize already initialized');
@@ -25,29 +39,32 @@ export async function initPersonalize() {
   }
 
   try {
-    // Get Project UID from environment
-    const projectUid = process.env.REACT_APP_CONTENTSTACK_PERSONALIZE_PROJECT_UID;
+    const apiKey = process.env.REACT_APP_CONTENTSTACK_API_KEY;
+    const environment = process.env.REACT_APP_CONTENTSTACK_ENVIRONMENT || 'development';
 
-    if (!projectUid) {
-      console.warn('⚠️ Personalize Project UID not configured');
-      console.warn('   Add REACT_APP_CONTENTSTACK_PERSONALIZE_PROJECT_UID to your .env file');
-      console.warn('   Personalization features will be disabled');
+    if (!apiKey) {
+      console.warn('⚠️ Contentstack API Key not configured');
+      console.warn('   Add REACT_APP_CONTENTSTACK_API_KEY to your .env file');
       return null;
     }
 
     console.log('🎯 Initializing Contentstack Personalize...');
-    console.log('   Project UID:', projectUid);
+    console.log('   API Key:', apiKey.substring(0, 10) + '...');
+    console.log('   Environment:', environment);
 
-    // Initialize the SDK
-    await Personalize.init(projectUid);
+    // Initialize using the browser SDK
+    await window.ContentstackPersonalize.init({
+      apiKey: apiKey,
+      environment: environment,
+    });
 
-    // Store globally for easy access
-    window.csPersonalize = Personalize;
+    // Create shorthand reference
+    window.csPersonalize = window.ContentstackPersonalize;
 
     console.log('✅ Personalize SDK initialized successfully');
-    console.log('   Available methods:', Object.keys(Personalize));
+    console.log('   SDK available at: window.csPersonalize');
 
-    return Personalize;
+    return window.ContentstackPersonalize;
   } catch (error) {
     console.error('❌ Failed to initialize Personalize SDK:', error);
     console.error('   Error details:', error.message);

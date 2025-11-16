@@ -64,29 +64,15 @@ export async function setProfileTraits(profile = {}, user = {}) {
       traits.username = String(user.username);
     }
 
-    // Set traits using Edge SDK's set method
-    await window.csPersonalize.set(traits);
+    // Set traits using browser SDK's set method
+    // Set each trait individually for browser SDK compatibility
+    for (const [key, value] of Object.entries(traits)) {
+      if (value !== null && value !== undefined) {
+        window.csPersonalize.setTrait(key, value);
+      }
+    }
 
     console.log('✅ Personalize traits set successfully:', traits);
-
-    // Get and log active experiences
-    try {
-      const experiences = window.csPersonalize.getExperiences();
-      console.log('🎨 Active personalization experiences:', experiences);
-    } catch (e) {
-      console.log('ℹ️ Could not retrieve experiences:', e.message);
-    }
-
-    // Get and log variant aliases
-    try {
-      const variantAliases = window.csPersonalize.getVariantAliases();
-      console.log('🔖 Variant aliases for content delivery:', variantAliases);
-      
-      // Store globally for API calls
-      window.__PERSONALIZE_VARIANTS__ = variantAliases;
-    } catch (e) {
-      console.log('ℹ️ Could not retrieve variant aliases:', e.message);
-    }
 
   } catch (err) {
     console.error('❌ Error setting Personalize traits:', err);
