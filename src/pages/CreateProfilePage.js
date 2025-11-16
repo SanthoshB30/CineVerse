@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUpcomingMovies, getImageUrl } from '../api/contentstack';
+import { trackProfileCreation } from '../services/analytics';
 
 const AVATAR_OPTIONS = [
   '👤', '🎭', '🎬', '🎪', '🎨', '🎯', '🎮', '🎲',
@@ -102,6 +103,9 @@ const CreateProfilePage = () => {
     const updatedProfiles = [...profiles, newProfile];
     setProfiles(updatedProfiles);
     updateUserProfiles(updatedProfiles);
+    
+    // Track profile creation
+    trackProfileCreation(newProfile.id, newProfile.name);
     
     setNewProfileName('');
     setSelectedAvatar(AVATAR_OPTIONS[0]);

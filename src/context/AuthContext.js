@@ -1,13 +1,26 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { signUpUser, signInUser, updateUserProfiles as updateProfilesAPI } from '../api/auth';
 
 const AuthContext = createContext(null);
+
+// Check if Contentstack is configured
+const isContentstackConfigured = () => {
+  return !!(
+    process.env.REACT_APP_CONTENTSTACK_API_KEY &&
+    process.env.REACT_APP_CONTENTSTACK_DELIVERY_TOKEN
+  );
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [useContentstack, setUseContentstack] = useState(false);
 
   useEffect(() => {
+    // Check if Contentstack is configured
+    setUseContentstack(isContentstackConfigured());
+    
     // Check if user is already logged in (from localStorage or sessionStorage)
     const savedUser = localStorage.getItem('cineverse_user') || sessionStorage.getItem('cineverse_user');
     const savedProfile = localStorage.getItem('cineverse_selected_profile') || sessionStorage.getItem('cineverse_selected_profile');
@@ -21,68 +34,137 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  const signup = (email, password) => {
-    // Check if user already exists
+  // LOCAL STORAGE FALLBACK FUNCTIONS
+  const signupLocal = (username, email, password) => {
     const existingUsers = JSON.parse(localStorage.getItem('cineverse_users') || '{}');
     
     if (existingUsers[email]) {
       return { success: false, error: 'Email already registered' };
     }
 
-    // Create new user
     const userData = {
+      uid: Date.now().toString(),
+      username,
       email,
-      password, // In production, this should be hashed
+      password,
       profiles: [],
-      createdAt: new Date().toISOString()
+      created_on: new Date().toISOString()
     };
 
-    // Save to "database" (localStorage)
     existingUsers[email] = userData;
     localStorage.setItem('cineverse_users', JSON.stringify(existingUsers));
 
-    // Set as current user
     setUser(userData);
     sessionStorage.setItem('cineverse_user', JSON.stringify(userData));
 
     return { success: true, user: userData };
   };
 
-  const login = (email, password, rememberMe = false) => {
-    // Get all users from "database"
+  const loginLocal = (email, password, rememberMe = false) => {
     const existingUsers = JSON.parse(localStorage.getItem('cineverse_users') || '{}');
-    
-    // Check credentials
     const userData = existingUsers[email];
+    
     if (!userData || userData.password !== password) {
       return { success: false, error: 'Invalid email or password' };
     }
 
-    // Set current user
     setUser(userData);
-    
-    // Store based on remember me preference
     const storage = rememberMe ? localStorage : sessionStorage;
     storage.setItem('cineverse_user', JSON.stringify(userData));
 
     return { success: true, user: userData };
   };
 
-  const updateUserProfiles = (profiles) => {
+  const updateProfilesLocal = (profiles) => {
     if (!user) return;
 
     const updatedUser = { ...user, profiles };
     setUser(updatedUser);
 
-    // Update in storage
     const storage = localStorage.getItem('cineverse_user') ? localStorage : sessionStorage;
     storage.setItem('cineverse_user', JSON.stringify(updatedUser));
 
-    // Update in "database"
     const existingUsers = JSON.parse(localStorage.getItem('cineverse_users') || '{}');
     if (existingUsers[user.email]) {
       existingUsers[user.email] = updatedUser;
       localStorage.setItem('cineverse_users', JSON.stringify(existingUsers));
+    }
+  };
+
+  // CONTENTSTACK API FUNCTIONS
+  const signup = async (username, email, password) => {
+    console.log('📝 AuthContext signup called with:', { username, email, useContentstack });
+    try {
+      if (useContentstack) {
+        console.log('🔵 Using Contentstack API for signup...');
+        // Use Contentstack API
+        const userData = await signUpUser(username, email, password);
+        console.log('✅ Contentstack signup successful:', userData);
+        setUser(userData);
+        sessionStorage.setItem('cineverse_user', JSON.stringify(userData));
+        return { success: true, user: userData };
+      } else {
+        console.log('🔵 Using localStorage fallback for signup...');
+        // Fallback to localStorage
+        const result = signupLocal(username, email, password);
+        console.log('✅ localStorage signup result:', result);
+        return result;
+      }
+    } catch (error) {
+      console.error('❌ Signup error in AuthContext:', error);
+      return { success: false, error: error.message || 'Signup failed' };
+    }
+  };
+
+  const login = async (email, password, rememberMe = false) => {
+    try {
+      if (useContentstack) {
+        // Use Contentstack API
+        const userData = await signInUser(email, password);
+        setUser(userData);
+        
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem('cineverse_user', JSON.stringify(userData));
+        
+        return { success: true, user: userData };
+      } else {
+        // Fallback to localStorage
+        return loginLocal(email, password, rememberMe);
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: error.message || 'Login failed' };
+    }
+  };
+
+  const updateUserProfiles = async (profiles) => {
+    if (!user) return;
+
+    try {
+      if (useContentstack && user.uid) {
+        // Use Contentstack API
+        await updateProfilesAPI(user.uid, profiles);
+      }
+      
+      // Always update local state and storage
+      const updatedUser = { ...user, profiles };
+      setUser(updatedUser);
+
+      const storage = localStorage.getItem('cineverse_user') ? localStorage : sessionStorage;
+      storage.setItem('cineverse_user', JSON.stringify(updatedUser));
+
+      // If not using Contentstack, update localStorage
+      if (!useContentstack) {
+        const existingUsers = JSON.parse(localStorage.getItem('cineverse_users') || '{}');
+        if (existingUsers[user.email]) {
+          existingUsers[user.email] = updatedUser;
+          localStorage.setItem('cineverse_users', JSON.stringify(existingUsers));
+        }
+      }
+    } catch (error) {
+      console.error('Error updating profiles:', error);
+      // Fallback to local storage on error
+      updateProfilesLocal(profiles);
     }
   };
 
@@ -112,7 +194,9 @@ export const AuthProvider = ({ children }) => {
     updateUserProfiles,
     selectProfile,
     loading,
-    isAuthenticated: !!user && !!selectedProfile
+    isAuthenticated: !!user && !!selectedProfile,
+    // Helper for routes that only need user (not profile)
+    hasUser: !!user
   };
 
   return (

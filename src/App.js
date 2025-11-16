@@ -12,6 +12,7 @@ import CreateProfilePage from './pages/CreateProfilePage';
 import SelectProfilePage from './pages/SelectProfilePage';
 import SwitchProfilePage from './pages/SwitchProfilePage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
+import ManageProfilesPage from './pages/ManageProfilesPage';
 import HomePage from './pages/HomePage';
 import MovieDetailPage from './pages/MovieDetailPage';
 import DirectorPage from './pages/DirectorPage';
@@ -50,7 +51,19 @@ function App() {
               {/* Semi-protected routes - Profile Management */}
               <Route path="/create-profile" element={<CreateProfilePage />} />
               <Route path="/select-profile" element={<SelectProfilePage />} />
-              <Route path="/profiles" element={<CreateProfilePage />} />
+              <Route path="/profiles" element={
+                <ProtectedRoute>
+                  <>
+                    <Navigation />
+                    <main className="main-content">
+                      <ManageProfilesPage />
+                    </main>
+                    <footer className="footer">
+                      <p>&copy; 2025 CineVerse. Your Universe of Cinema.</p>
+                    </footer>
+                  </>
+                </ProtectedRoute>
+              } />
               <Route path="/switch-profile" element={
                 <ProtectedRoute>
                   <SwitchProfilePage />

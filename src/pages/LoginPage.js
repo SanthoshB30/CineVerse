@@ -41,21 +41,26 @@ const LoginPage = () => {
       return;
     }
 
-    // Attempt login
-    const result = login(email, password, rememberMe);
-    
-    setLoading(false);
-    
-    if (result.success) {
-      // Check if user has profiles, otherwise redirect to profile creation
-      if (result.user.profiles && result.user.profiles.length > 0) {
-        navigate('/select-profile');
+    try {
+      // Attempt login
+      const result = await login(email, password, rememberMe);
+      
+      if (result.success) {
+        // Check if user has profiles, otherwise redirect to profile creation
+        if (result.user.profiles && result.user.profiles.length > 0) {
+          navigate('/select-profile');
+        } else {
+          navigate('/create-profile');
+        }
       } else {
-        navigate('/create-profile');
+        setError(result.error || 'Login failed');
+        setPassword(''); // Clear password on error
       }
-    } else {
-      setError(result.error);
-      setPassword(''); // Clear password on error
+    } catch (err) {
+      setError(err.message || 'An error occurred during login');
+      setPassword('');
+    } finally {
+      setLoading(false);
     }
   };
 

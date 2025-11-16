@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { searchMovies } from '../api/contentstack';
 import MovieCard from '../components/MovieCard';
+import { trackSearch } from '../services/analytics';
 
 const SearchResultsPage = () => {
   const [searchParams] = useSearchParams();
@@ -23,6 +24,10 @@ const SearchResultsPage = () => {
     setLoading(true);
     const movies = await searchMovies(query);
     setResults(movies);
+    
+    // Track search query and results
+    trackSearch(query, movies.length);
+    
     setLoading(false);
   };
 

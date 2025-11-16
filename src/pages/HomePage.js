@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { getImageUrl } from '../api/contentstack';
 import { getAllMovies } from '../services/dataService';
 import MovieCard from '../components/MovieCard';
+import { trackHomePage } from '../services/analytics';
 
 const HomePage = () => {
   const [allMovies, setAllMovies] = useState([]);
@@ -12,6 +13,8 @@ const HomePage = () => {
 
   useEffect(() => {
     loadData();
+    // Track home page visit
+    trackHomePage();
   }, []);
 
   useEffect(() => {

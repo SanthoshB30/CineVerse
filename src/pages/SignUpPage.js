@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import LogoHeader from '../components/LogoHeader';
 
 const SignUpPage = () => {
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -14,11 +15,20 @@ const SignUpPage = () => {
 
   // Load background image from app settings
   useEffect(() => {
+    console.log('🎬 SignUpPage mounted');
+    console.log('📊 Current error state:', error);
     const bgImage = window.__CINEVERSE_BG_IMAGE__;
     if (bgImage) {
       setBackgroundImage(bgImage);
     }
   }, []);
+
+  // Log when error changes
+  useEffect(() => {
+    if (error) {
+      console.log('⚠️ Error state changed to:', error);
+    }
+  }, [error]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,8 +36,15 @@ const SignUpPage = () => {
     setLoading(true);
 
     // Validate inputs
-    if (!email.trim() || !password.trim()) {
-      setError('Please enter both email and password');
+    if (!username.trim() || !email.trim() || !password.trim()) {
+      setError('Please fill in all fields');
+      setLoading(false);
+      return;
+    }
+
+    // Validate username
+    if (username.length < 3) {
+      setError('Username must be at least 3 characters long');
       setLoading(false);
       return;
     }
@@ -47,15 +64,24 @@ const SignUpPage = () => {
       return;
     }
 
-    // Attempt signup
-    const result = signup(email, password);
-    
-    setLoading(false);
-    
-    if (result.success) {
-      navigate('/create-profile');
-    } else {
-      setError(result.error);
+    try {
+      // Attempt signup
+      console.log('🔵 Starting signup process...');
+      const result = await signup(username, email, password);
+      console.log('🔵 Signup result:', result);
+      
+      if (result.success) {
+        console.log('✅ Signup successful, navigating to profile creation...');
+        navigate('/create-profile');
+      } else {
+        console.error('❌ Signup failed:', result.error);
+        setError(result.error || 'Sign up failed');
+      }
+    } catch (err) {
+      console.error('❌ Signup error caught:', err);
+      setError(err.message || 'An error occurred during sign up');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -71,6 +97,21 @@ const SignUpPage = () => {
         <form className="signup-form" onSubmit={handleSubmit}>
           <div className="form-group">
             <input
+              type="text"
+              id="username"
+              className="form-input"
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
+              autoFocus
+              minLength={3}
+              maxLength={30}
+            />
+          </div>
+
+          <div className="form-group">
+            <input
               type="email"
               id="email"
               className="form-input"
@@ -78,7 +119,6 @@ const SignUpPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
-              autoFocus
             />
           </div>
 
@@ -91,6 +131,7 @@ const SignUpPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               autoComplete="new-password"
+              minLength={6}
             />
           </div>
 

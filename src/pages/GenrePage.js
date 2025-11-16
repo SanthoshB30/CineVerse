@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getGenreBySlug, getMoviesByGenre, getImageUrl } from '../api/contentstack';
 import MovieCard from '../components/MovieCard';
+import { trackGenreView } from '../services/analytics';
 
 const GenrePage = () => {
   const { slug } = useParams();
@@ -22,6 +23,11 @@ const GenrePage = () => {
     setLoading(true);
     const genreData = await getGenreBySlug(slug);
     setGenre(genreData);
+
+    // Track genre view
+    if (genreData) {
+      trackGenreView(genreData.uid, genreData.title, genreData.slug);
+    }
 
     const moviesData = await getMoviesByGenre(slug);
     setMovies(moviesData);

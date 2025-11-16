@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { getMovieBySlug, getImageUrl, getMoviesByGenre } from '../api/contentstack';
 import ReviewSection from '../components/ReviewSection';
 import MovieCard from '../components/MovieCard';
+import { trackMovieView, trackWatchedMovie } from '../services/analytics';
 
 const MovieDetailPage = () => {
   const { slug } = useParams();
@@ -19,6 +20,11 @@ const MovieDetailPage = () => {
     const movieData = await getMovieBySlug(slug);
     setMovie(movieData);
     
+    // Track movie view
+    if (movieData) {
+      trackMovieView(movieData.uid, movieData.title, movieData.slug);
+    }
+    
     // Load similar movies based on genre
     if (movieData && movieData.genre && movieData.genre.length > 0) {
       const genreSlug = movieData.genre[0].slug;
@@ -32,6 +38,13 @@ const MovieDetailPage = () => {
     }
     
     setLoading(false);
+  };
+
+  const handleWatchClick = (platform) => {
+    // Track watched event
+    if (movie) {
+      trackWatchedMovie(movie.uid, movie.title);
+    }
   };
 
   if (loading) {
@@ -145,6 +158,7 @@ const MovieDetailPage = () => {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="streaming-button"
+                      onClick={() => handleWatchClick(link.platform)}
                     >
                       <span className="platform-icon">▶</span>
                       <span className="platform-name">{link.platform}</span>

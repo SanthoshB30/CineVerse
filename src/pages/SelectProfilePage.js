@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { trackProfileSelection } from '../services/analytics';
 
 const SelectProfilePage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -31,6 +32,9 @@ const SelectProfilePage = () => {
   }, [user, navigate]);
 
   const handleSelectProfile = (profile) => {
+    // Track profile selection
+    trackProfileSelection(profile.id, profile.name);
+    
     selectProfile(profile);
     navigate('/home');
   };

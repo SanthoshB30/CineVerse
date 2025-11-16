@@ -48,15 +48,6 @@ const UserMenu = () => {
             🔄 Switch Profile
           </button>
           <button
-            className="user-menu-item"
-            onClick={() => {
-              setOpen(false);
-              navigate("/account");
-            }}
-          >
-            ⚙️ Account Settings
-          </button>
-          <button
             className="user-menu-item logout-button"
             onClick={handleLogout}
           >
