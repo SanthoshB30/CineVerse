@@ -4,7 +4,7 @@ import { getImageUrl } from '../api/contentstack';
 import { getAllMovies } from '../services/dataService';
 import MovieCard from '../components/MovieCard';
 import { trackHomePage } from '../services/analytics';
-import { usePersonalization } from '../personalize/usePersonalization';
+import { usePersonalizeVariants } from '../personalize/usePersonalizeVariants';
 
 const HomePage = () => {
   const [allMovies, setAllMovies] = useState([]);
@@ -12,8 +12,8 @@ const HomePage = () => {
   const [currentTrendingIndex, setCurrentTrendingIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   
-  // Get personalization variant
-  const { variant, loading: variantLoading } = usePersonalization();
+  // Get personalization variants (array of variant aliases)
+  const { variants, loading: variantLoading } = usePersonalizeVariants();
 
   useEffect(() => {
     loadData();
@@ -21,13 +21,13 @@ const HomePage = () => {
     trackHomePage();
   }, []);
 
-  // Reload data when variant changes
+  // Reload data when variants change
   useEffect(() => {
-    if (variant && !variantLoading) {
-      console.log('🔄 Variant changed, reloading data with personalization');
+    if (variants.length > 0 && !variantLoading) {
+      console.log('🔄 Variants changed, reloading data with personalization');
       loadData();
     }
-  }, [variant]);
+  }, [variants]);
 
   useEffect(() => {
     if (trendingMovies.length > 0) {
@@ -43,30 +43,30 @@ const HomePage = () => {
     try {
       const moviesData = await getAllMovies();
       
-      // Apply personalization based on variant
+      // Apply personalization based on variant aliases
       let personalizedMovies = moviesData;
       
-      if (variant) {
-        console.log('🎬 Applying variant-based filtering:', variant.id);
+      if (variants && variants.length > 0) {
+        console.log('🎬 Applying personalization with variants:', variants);
         
-        // Kids variant - show only kid-friendly content
-        if (variant.id === 'kids-variant' || variant.id === 'kids_content') {
+        // Check for kids variant
+        if (variants.some(v => v === 'kids_content' || v.includes('kids'))) {
           personalizedMovies = moviesData.filter(movie => 
             movie.age_rating === 'U' || movie.age_rating === 'PG' || !movie.age_rating
           );
           console.log(`✅ Kids filter: ${personalizedMovies.length} kid-safe movies`);
         }
         
-        // Tamil variant - prioritize Tamil movies
-        else if (variant.id === 'tamil-variant' || variant.id === 'tamil_movies') {
+        // Check for Tamil variant
+        else if (variants.some(v => v === 'tamil_movies' || v.includes('tamil'))) {
           const tamilMovies = moviesData.filter(m => m.language === 'tamil' || m.language === 'Tamil');
           const otherMovies = moviesData.filter(m => m.language !== 'tamil' && m.language !== 'Tamil');
           personalizedMovies = [...tamilMovies, ...otherMovies];
           console.log(`✅ Tamil prioritization: ${tamilMovies.length} Tamil movies first`);
         }
         
-        // Action variant - prioritize action movies
-        else if (variant.id === 'action-variant' || variant.id === 'action_genre') {
+        // Check for Action variant
+        else if (variants.some(v => v === 'action_genre' || v.includes('action'))) {
           const actionMovies = moviesData.filter(m => 
             m.genre?.some(g => g.name?.toLowerCase() === 'action')
           );
@@ -176,14 +176,14 @@ const HomePage = () => {
         <section className="home-movies-only-section">
           <div className="section-header">
             <h2 className="section-title">
-              {variant?.id === 'kids-variant' || variant?.id === 'kids_content' ? '👶 Kids Movies' :
-               variant?.id === 'tamil-variant' || variant?.id === 'tamil_movies' ? '🎬 Tamil Movies' :
-               variant?.id === 'action-variant' || variant?.id === 'action_genre' ? '💥 Action Movies' :
+              {variants.some(v => v.includes('kids')) ? '👶 Kids Movies' :
+               variants.some(v => v.includes('tamil')) ? '🎬 Tamil Movies' :
+               variants.some(v => v.includes('action')) ? '💥 Action Movies' :
                'All Movies'}
             </h2>
             <p className="section-subtitle">
               {allMovies.length} movies available
-              {variant && <span style={{ marginLeft: '10px', color: '#6C5CE7' }}>• Personalized for you</span>}
+              {variants.length > 0 && <span style={{ marginLeft: '10px', color: '#6C5CE7' }}>• Personalized for you</span>}
             </p>
           </div>
 

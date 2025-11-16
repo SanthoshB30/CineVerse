@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { PersonalizeProvider } from './context/PersonalizeContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navigation from './components/Navigation';
 import ChatBot from './components/ChatBot';
@@ -29,10 +30,11 @@ import './styles/App.css';
 function App() {
   return (
     <Router>
-      <AuthProvider>
-        <DataInitializer>
-          <ThemeInitializer />
-          <div className="App">
+      <PersonalizeProvider>
+        <AuthProvider>
+          <DataInitializer>
+            <ThemeInitializer />
+            <div className="App">
             <Routes>
               {/* Default route - redirect to login */}
               <Route path="/" element={<Navigate to="/login" replace />} />
@@ -260,8 +262,9 @@ function App() {
               } />
             </Routes>
           </div>
-        </DataInitializer>
-      </AuthProvider>
+          </DataInitializer>
+        </AuthProvider>
+      </PersonalizeProvider>
     </Router>
   );
 }
