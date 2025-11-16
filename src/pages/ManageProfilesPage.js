@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { getAllGenres } from '../api/contentstack';
 
 const AVATAR_OPTIONS = [
   '😀', '😎', '🤓', '😊', '🥳', '🤩',
@@ -20,6 +21,7 @@ const ManageProfilesPage = () => {
   });
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [genres, setGenres] = useState([]);
   const navigate = useNavigate();
   const { user, updateUserProfiles } = useAuth();
 
@@ -27,7 +29,17 @@ const ManageProfilesPage = () => {
     if (user?.profiles) {
       setProfiles(user.profiles);
     }
+    loadGenres();
   }, [user]);
+
+  const loadGenres = async () => {
+    try {
+      const genresData = await getAllGenres();
+      setGenres(genresData);
+    } catch (error) {
+      setGenres([]);
+    }
+  };
 
   const resetForm = () => {
     setFormData({
@@ -40,7 +52,7 @@ const ManageProfilesPage = () => {
     setError('');
   };
 
-  const handleCreateProfile = () => {
+  const handleCreateProfile = async () => {
     if (!formData.name.trim()) {
       setError('Please enter a profile name');
       return;
@@ -59,12 +71,17 @@ const ManageProfilesPage = () => {
       favorite_genre: formData.favoriteGenre || null
     };
 
-    const updatedProfiles = [...profiles, newProfile];
-    setProfiles(updatedProfiles);
-    updateUserProfiles(updatedProfiles);
-    
-    resetForm();
-    setShowCreateForm(false);
+    try {
+      const updatedProfiles = [...profiles, newProfile];
+      setProfiles(updatedProfiles);
+      await updateUserProfiles(updatedProfiles);
+      
+      resetForm();
+      setShowCreateForm(false);
+    } catch (error) {
+      setError('Failed to create profile. Please try again.');
+      setProfiles(profiles);
+    }
   };
 
   const handleEditProfile = (profileIndex) => {
@@ -78,14 +95,24 @@ const ManageProfilesPage = () => {
       favoriteGenre: profile.favorite_genre || ''
     });
     setShowCreateForm(false);
+    setError('');
+    
+    // Scroll to form for better UX
+    setTimeout(() => {
+      const formSection = document.querySelector('.profile-form-section');
+      if (formSection) {
+        formSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 100);
   };
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = async () => {
     if (!formData.name.trim()) {
       setError('Please enter a profile name');
       return;
     }
 
+    const previousProfiles = [...profiles];
     const updatedProfiles = profiles.map((p, index) => 
       index === editingProfile 
         ? { 
@@ -99,19 +126,32 @@ const ManageProfilesPage = () => {
         : p
     );
 
-    setProfiles(updatedProfiles);
-    updateUserProfiles(updatedProfiles);
-    
-    resetForm();
-    setEditingProfile(null);
+    try {
+      setProfiles(updatedProfiles);
+      await updateUserProfiles(updatedProfiles);
+      
+      resetForm();
+      setEditingProfile(null);
+    } catch (error) {
+      setError('Failed to update profile. Please try again.');
+      setProfiles(previousProfiles);
+    }
   };
 
-  const handleDeleteProfile = (profileIndex) => {
+  const handleDeleteProfile = async (profileIndex) => {
     if (deleteConfirm === profileIndex) {
+      const previousProfiles = [...profiles];
       const updatedProfiles = profiles.filter((_, index) => index !== profileIndex);
-      setProfiles(updatedProfiles);
-      updateUserProfiles(updatedProfiles);
-      setDeleteConfirm(null);
+      
+      try {
+        setProfiles(updatedProfiles);
+        await updateUserProfiles(updatedProfiles);
+        setDeleteConfirm(null);
+      } catch (error) {
+        setError('Failed to delete profile. Please try again.');
+        setProfiles(previousProfiles);
+        setDeleteConfirm(null);
+      }
     } else {
       setDeleteConfirm(profileIndex);
       setTimeout(() => setDeleteConfirm(null), 3000);
@@ -123,6 +163,7 @@ const ManageProfilesPage = () => {
     setEditingProfile(null);
     setShowCreateForm(false);
     setDeleteConfirm(null);
+    setError('');
   };
 
   return (
@@ -185,7 +226,7 @@ const ManageProfilesPage = () => {
           ))}
 
           {/* Add New Profile Card */}
-          {profiles.length < 4 && !showCreateForm && !editingProfile && (
+          {profiles.length < 4 && !showCreateForm && editingProfile === null && (
             <div className="manage-profile-card add-profile-card">
               <button
                 className="add-profile-button"
@@ -199,10 +240,10 @@ const ManageProfilesPage = () => {
         </div>
 
         {/* Create/Edit Form */}
-        {(showCreateForm || editingProfile) && (
+        {(showCreateForm || editingProfile !== null) && (
           <div className="profile-form-section">
             <h2 className="form-title">
-              {editingProfile ? '✏️ Edit Profile' : '➕ Create New Profile'}
+              {editingProfile !== null ? '✏️ Edit Profile' : '➕ Create New Profile'}
             </h2>
 
             <div className="form-content">
@@ -277,15 +318,11 @@ const ManageProfilesPage = () => {
                   onChange={(e) => setFormData({ ...formData, favoriteGenre: e.target.value })}
                 >
                   <option value="">Select a genre...</option>
-                  <option value="action">Action</option>
-                  <option value="comedy">Comedy</option>
-                  <option value="drama">Drama</option>
-                  <option value="horror">Horror</option>
-                  <option value="sci-fi">Sci-Fi</option>
-                  <option value="thriller">Thriller</option>
-                  <option value="romance">Romance</option>
-                  <option value="adventure">Adventure</option>
-                  <option value="animation">Animation</option>
+                  {genres.map((genre) => (
+                    <option key={genre.uid} value={genre.slug}>
+                      {genre.name || genre.title}
+                    </option>
+                  ))}
                 </select>
                 <p className="form-help-text">
                   Get personalized recommendations based on your favorite genre
@@ -307,9 +344,9 @@ const ManageProfilesPage = () => {
                 </button>
                 <button
                   className="btn btn-primary"
-                  onClick={editingProfile ? handleSaveEdit : handleCreateProfile}
+                  onClick={editingProfile !== null ? handleSaveEdit : handleCreateProfile}
                 >
-                  {editingProfile ? 'Save Changes' : 'Create Profile'}
+                  {editingProfile !== null ? 'Save Changes' : 'Create Profile'}
                 </button>
               </div>
             </div>

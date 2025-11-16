@@ -19,35 +19,25 @@ export const AuthProvider = ({ children }) => {
   const [useContentstack, setUseContentstack] = useState(false);
 
   useEffect(() => {
-    // Check if Contentstack is configured
     const csConfigured = isContentstackConfigured();
     setUseContentstack(csConfigured);
     
-    console.log('🔧 AuthContext initialized');
-    console.log('   Contentstack configured:', csConfigured ? '✅ Yes' : '❌ No (using localStorage only)');
-    console.log('   Management Token:', process.env.REACT_APP_CONTENTSTACK_MANAGEMENT_TOKEN ? '✅ Set' : '⚠️ Not set (profiles won\'t persist to Contentstack)');
-    
-    // Check if user is already logged in (from localStorage or sessionStorage)
     const savedUser = localStorage.getItem('cineverse_user') || sessionStorage.getItem('cineverse_user');
     const savedProfile = localStorage.getItem('cineverse_selected_profile') || sessionStorage.getItem('cineverse_selected_profile');
     
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
-      console.log('👤 Restored user from storage:', parsedUser.email);
-      console.log('📊 User has', parsedUser.profiles?.length || 0, 'profile(s)');
       setUser(parsedUser);
     }
     if (savedProfile) {
       const parsedProfile = JSON.parse(savedProfile);
-      console.log('🎭 Restored profile:', parsedProfile.profile_name);
       setSelectedProfile(parsedProfile);
       
-      // Set Personalize traits for restored profile
       setTimeout(() => {
         const savedUser = localStorage.getItem('cineverse_user') || sessionStorage.getItem('cineverse_user');
         const parsedUser = savedUser ? JSON.parse(savedUser) : null;
         setProfileTraits(parsedProfile, parsedUser);
-      }, 100); // Small delay to ensure Personalize SDK is ready
+      }, 100);
     }
     setLoading(false);
   }, []);
@@ -111,36 +101,26 @@ export const AuthProvider = ({ children }) => {
 
   // CONTENTSTACK API FUNCTIONS
   const signup = async (username, email, password) => {
-    console.log('📝 AuthContext signup called with:', { username, email, useContentstack });
     try {
       if (useContentstack) {
-        console.log('🔵 Using Contentstack API for signup...');
-        // Use Contentstack API
         const userData = await signUpUser(username, email, password);
-        console.log('✅ Contentstack signup successful:', userData);
         setUser(userData);
         sessionStorage.setItem('cineverse_user', JSON.stringify(userData));
         return { success: true, user: userData };
       } else {
-        console.log('🔵 Using localStorage fallback for signup...');
-        // Fallback to localStorage
         const result = signupLocal(username, email, password);
-        console.log('✅ localStorage signup result:', result);
         return result;
       }
     } catch (error) {
-      console.error('❌ Signup error in AuthContext:', error);
+      console.error('Signup error:', error);
       return { success: false, error: error.message || 'Signup failed' };
     }
   };
 
   const login = async (email, password, rememberMe = false) => {
-    console.log('🔐 Login attempt for:', email);
     try {
       if (useContentstack) {
-        // Use Contentstack API
         const userData = await signInUser(email, password);
-        console.log('✅ User data from API:', userData);
         setUser(userData);
         
         const storage = rememberMe ? localStorage : sessionStorage;
@@ -148,14 +128,11 @@ export const AuthProvider = ({ children }) => {
         
         return { success: true, user: userData };
       } else {
-        // Fallback to localStorage
-        console.log('🔵 Using localStorage login');
         const result = loginLocal(email, password, rememberMe);
-        console.log('✅ Login result:', result);
         return result;
       }
     } catch (error) {
-      console.error('❌ Login error:', error);
+      console.error('Login error:', error);
       return { success: false, error: error.message || 'Login failed' };
     }
   };
@@ -163,44 +140,32 @@ export const AuthProvider = ({ children }) => {
   const updateUserProfiles = async (profiles) => {
     if (!user) return;
 
-    console.log('📝 Updating profiles for user:', user.email, 'Profiles:', profiles);
-
     try {
       if (useContentstack && user.uid) {
-        // Use Contentstack API
-        console.log('🔵 Updating profiles via Contentstack API');
         await updateProfilesAPI(user.uid, profiles);
       }
       
-      // Always update local state and storage
       const updatedUser = { ...user, profiles };
       setUser(updatedUser);
 
-      // Update both localStorage and sessionStorage to ensure persistence
       const storage = localStorage.getItem('cineverse_user') ? localStorage : sessionStorage;
       storage.setItem('cineverse_user', JSON.stringify(updatedUser));
       
-      // Also update the opposite storage to ensure consistency
       if (storage === localStorage) {
         sessionStorage.setItem('cineverse_user', JSON.stringify(updatedUser));
       } else {
         localStorage.setItem('cineverse_user', JSON.stringify(updatedUser));
       }
 
-      // If not using Contentstack, update localStorage users database
       if (!useContentstack) {
         const existingUsers = JSON.parse(localStorage.getItem('cineverse_users') || '{}');
         if (existingUsers[user.email]) {
           existingUsers[user.email] = updatedUser;
           localStorage.setItem('cineverse_users', JSON.stringify(existingUsers));
-          console.log('✅ Updated profiles in localStorage database');
         }
       }
-      
-      console.log('✅ Profiles updated successfully');
     } catch (error) {
-      console.error('❌ Error updating profiles:', error);
-      // Fallback to local storage on error
+      console.error('Error updating profiles:', error);
       updateProfilesLocal(profiles);
     }
   };

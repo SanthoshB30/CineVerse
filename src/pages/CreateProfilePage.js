@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getUpcomingMovies, getImageUrl } from '../api/contentstack';
+import { getUpcomingMovies, getImageUrl, getAllGenres } from '../api/contentstack';
 import { trackProfileCreation } from '../services/analytics';
 import { setProfileTraits } from '../personalize/personalizeHelpers';
 
@@ -21,23 +21,24 @@ const CreateProfilePage = () => {
   const [error, setError] = useState('');
   const [backgroundImages, setBackgroundImages] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [genres, setGenres] = useState([]);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, updateUserProfiles, selectProfile } = useAuth();
 
-  // Fetch upcoming movies from Contentstack
   useEffect(() => {
     loadUpcomingMovies();
+    loadGenres();
     
-    // Load existing profiles if any
     if (user?.profiles) {
-      console.log('📥 Loading existing profiles from user:', user.profiles);
       setProfiles(user.profiles);
-    } else {
-      console.log('⚠️ No existing profiles found for user');
     }
-  }, [user]);
 
-  // Slideshow rotation
+    if (location.state?.openForm && user?.profiles?.length < 4) {
+      setShowCreateForm(true);
+    }
+  }, [user, location.state]);
+
   useEffect(() => {
     if (backgroundImages.length > 0) {
       const interval = setInterval(() => {
@@ -51,18 +52,15 @@ const CreateProfilePage = () => {
     try {
       const upcomingMovies = await getUpcomingMovies();
       
-      // Extract backdrop/banner images from upcoming movies
       if (upcomingMovies && upcomingMovies.length > 0) {
         const images = upcomingMovies
           .map(movie => getImageUrl(movie.banner_image) || getImageUrl(movie.poster_image))
           .filter(url => url !== null)
           .slice(0, 5);
         
-        // If we have images from Contentstack, use them; otherwise use fallback
         if (images.length > 0) {
           setBackgroundImages(images);
         } else {
-          // Fallback images
           setBackgroundImages([
             'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?w=1920&h=1080&fit=crop',
             'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1920&h=1080&fit=crop',
@@ -72,7 +70,6 @@ const CreateProfilePage = () => {
           ]);
         }
       } else {
-        // Fallback if no upcoming movies
         setBackgroundImages([
           'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?w=1920&h=1080&fit=crop',
           'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1920&h=1080&fit=crop',
@@ -80,12 +77,19 @@ const CreateProfilePage = () => {
         ]);
       }
     } catch (error) {
-      console.error('Error loading upcoming movies:', error);
-      // Use fallback images on error
       setBackgroundImages([
         'https://images.unsplash.com/photo-1598899134739-24c46f58b8c0?w=1920&h=1080&fit=crop',
         'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=1920&h=1080&fit=crop'
       ]);
+    }
+  };
+
+  const loadGenres = async () => {
+    try {
+      const genresData = await getAllGenres();
+      setGenres(genresData);
+    } catch (error) {
+      setGenres([]);
     }
   };
 
@@ -108,22 +112,12 @@ const CreateProfilePage = () => {
       favorite_genre: favoriteGenre || null
     };
 
-    console.log('🎭 Creating new profile:', newProfile);
-
     const updatedProfiles = [...profiles, newProfile];
-    console.log('📊 All profiles after creation:', updatedProfiles);
-    
     setProfiles(updatedProfiles);
     
-    // Update user profiles (this will save to Contentstack and localStorage)
     try {
       await updateUserProfiles(updatedProfiles);
-      console.log('✅ Profile saved successfully');
-      
-      // Track profile creation
       trackProfileCreation(newProfile.profile_name, newProfile.profile_name);
-      
-      // Set personalize traits for the newly created profile
       setProfileTraits(newProfile, user);
       
       setNewProfileName('');
@@ -134,7 +128,7 @@ const CreateProfilePage = () => {
       setShowCreateForm(false);
       setError('');
     } catch (error) {
-      console.error('❌ Failed to save profile:', error);
+      console.error('Failed to save profile:', error);
       setError('Failed to save profile. Please try again.');
     }
   };
@@ -145,19 +139,15 @@ const CreateProfilePage = () => {
   };
 
   const handleDeleteProfile = async (profileIndex) => {
-    console.log('🗑️ Deleting profile at index:', profileIndex);
+    const previousProfiles = [...profiles];
     const updatedProfiles = profiles.filter((_, index) => index !== profileIndex);
-    console.log('📊 Profiles after deletion:', updatedProfiles);
     
     setProfiles(updatedProfiles);
     
     try {
       await updateUserProfiles(updatedProfiles);
-      console.log('✅ Profile deleted successfully');
     } catch (error) {
-      console.error('❌ Failed to delete profile:', error);
-      // Revert the deletion on error
-      setProfiles(profiles);
+      setProfiles(previousProfiles);
       setError('Failed to delete profile. Please try again.');
     }
   };
@@ -290,15 +280,11 @@ const CreateProfilePage = () => {
                   style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}
                 >
                   <option value="">Select a genre...</option>
-                  <option value="action">Action</option>
-                  <option value="comedy">Comedy</option>
-                  <option value="drama">Drama</option>
-                  <option value="horror">Horror</option>
-                  <option value="sci-fi">Sci-Fi</option>
-                  <option value="thriller">Thriller</option>
-                  <option value="romance">Romance</option>
-                  <option value="adventure">Adventure</option>
-                  <option value="animation">Animation</option>
+                  {genres.map((genre) => (
+                    <option key={genre.uid} value={genre.slug}>
+                      {genre.name || genre.title}
+                    </option>
+                  ))}
                 </select>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
                   Get personalized recommendations based on your favorite genre

@@ -91,21 +91,15 @@ const SelectProfilePage = () => {
 
             {user.profiles.length < 4 && (
               <div className="profile-item">
-                <Link
-                  to="/create-profile"
+                <button
                   className="profile-avatar-button add-profile"
+                  onClick={() => navigate('/create-profile', { state: { openForm: true } })}
                 >
                   <div className="profile-avatar add-avatar">+</div>
                   <span className="profile-name">Add Profile</span>
-                </Link>
+                </button>
               </div>
             )}
-          </div>
-
-          <div className="profile-manage">
-            <Link to="/create-profile" className="btn btn-secondary">
-              Manage Profiles
-            </Link>
           </div>
         </div>
       </div>

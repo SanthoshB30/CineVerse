@@ -54,7 +54,7 @@ function App() {
               <Route path="/create-profile" element={<CreateProfilePage />} />
               <Route path="/select-profile" element={<SelectProfilePage />} />
               <Route path="/profiles" element={
-                <ProtectedRoute>
+                <ProtectedRoute requireProfile={false}>
                   <>
                     <Navigation />
                     <main className="main-content">
@@ -67,7 +67,7 @@ function App() {
                 </ProtectedRoute>
               } />
               <Route path="/switch-profile" element={
-                <ProtectedRoute>
+                <ProtectedRoute requireProfile={false}>
                   <SwitchProfilePage />
                 </ProtectedRoute>
               } />

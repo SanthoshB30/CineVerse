@@ -12,12 +12,36 @@ const UserMenu = () => {
     navigate("/login");
   };
 
+  const handleManageProfiles = () => {
+    setOpen(false);
+    navigate("/profiles");
+  };
+
+  const handleSwitchProfile = () => {
+    setOpen(false);
+    navigate("/switch-profile");
+  };
+
+  const handleLogoutClick = () => {
+    setOpen(false);
+    handleLogout();
+  };
+
   return (
     <div className="user-menu-container">
       {/* Hamburger icon */}
       <div 
         className="hamburger-menu" 
         onClick={() => setOpen(!open)}
+        role="button"
+        aria-label="User menu"
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setOpen(!open);
+          }
+        }}
       >
         <div className="bar"></div>
         <div className="bar"></div>
@@ -25,35 +49,38 @@ const UserMenu = () => {
       </div>
 
       {open && (
-        <div className="user-menu-dropdown">
-          <div className="user-menu-header">
-            <strong>{selectedProfile?.name || "User"}</strong>
+        <>
+          <div 
+            className="user-menu-overlay"
+            onClick={() => setOpen(false)}
+          />
+          <div className="user-menu-dropdown">
+            <div className="user-menu-header">
+              <strong>{selectedProfile?.profile_name || selectedProfile?.name || "User"}</strong>
+            </div>
+            <button
+              className="user-menu-item"
+              onClick={handleManageProfiles}
+              type="button"
+            >
+              👥 Manage Profiles
+            </button>
+            <button
+              className="user-menu-item"
+              onClick={handleSwitchProfile}
+              type="button"
+            >
+              🔄 Switch Profile
+            </button>
+            <button
+              className="user-menu-item logout-button"
+              onClick={handleLogoutClick}
+              type="button"
+            >
+              🚪 Sign Out
+            </button>
           </div>
-          <button
-            className="user-menu-item"
-            onClick={() => {
-              setOpen(false);
-              navigate("/profiles");
-            }}
-          >
-            👥 Manage Profiles
-          </button>
-          <button
-            className="user-menu-item"
-            onClick={() => {
-              setOpen(false);
-              navigate("/switch-profile");
-            }}
-          >
-            🔄 Switch Profile
-          </button>
-          <button
-            className="user-menu-item logout-button"
-            onClick={handleLogout}
-          >
-            🚪 Sign Out
-          </button>
-        </div>
+        </>
       )}
     </div>
   );
