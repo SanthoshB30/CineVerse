@@ -58,14 +58,27 @@ const SwitchProfilePage = () => {
 
         <div className="profiles-container">
           <div className="profiles-grid">
-            {user.profiles.map((profile) => (
-              <div key={profile.id} className="profile-item">
+            {user.profiles.map((profile, index) => (
+              <div key={profile._metadata?.uid || index} className="profile-item">
                 <button
                   className="profile-avatar-button"
                   onClick={() => handleSelectProfile(profile)}
                 >
                   <div className="profile-avatar">{profile.avatar}</div>
-                  <span className="profile-name">{profile.name}</span>
+                  <span className="profile-name">
+                    {profile.profile_name}
+                    {profile.is_kid && <span style={{ fontSize: '0.9rem', marginLeft: '0.3rem' }}>👶</span>}
+                  </span>
+                  {profile.preferred_language && (
+                    <span style={{ 
+                      fontSize: '0.75rem', 
+                      color: 'var(--text-secondary)', 
+                      marginTop: '0.25rem',
+                      textTransform: 'capitalize'
+                    }}>
+                      🌐 {profile.preferred_language}
+                    </span>
+                  )}
                 </button>
               </div>
             ))}

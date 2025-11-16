@@ -10,6 +10,13 @@ const DELIVERY_TOKEN = process.env.REACT_APP_CONTENTSTACK_DELIVERY_TOKEN || 'cs5
 const MANAGEMENT_TOKEN = process.env.REACT_APP_CONTENTSTACK_MANAGEMENT_TOKEN;
 const ENVIRONMENT = process.env.REACT_APP_CONTENTSTACK_ENVIRONMENT || 'development';
 
+// Log Contentstack configuration on module load
+console.log('🔧 Contentstack Auth Configuration:');
+console.log('   API_KEY:', API_KEY ? '✅ Set' : '❌ Missing');
+console.log('   DELIVERY_TOKEN:', DELIVERY_TOKEN ? '✅ Set' : '❌ Missing');
+console.log('   MANAGEMENT_TOKEN:', MANAGEMENT_TOKEN ? '✅ Set' : '❌ Missing (profiles will only save to localStorage)');
+console.log('   ENVIRONMENT:', ENVIRONMENT);
+
 /**
  * Encrypt password using AES encryption
  */
@@ -43,6 +50,7 @@ export const signUpUser = async (username, email, password) => {
       throw new Error('Email already exists');
     }
 
+    // Try native array first, fallback to empty string if Contentstack expects text field
     const requestBody = {
       entry: {
         title: username.toLowerCase().replace(/\s+/g, '_'),
@@ -50,9 +58,11 @@ export const signUpUser = async (username, email, password) => {
         email: email.toLowerCase(),
         password: encryptedPassword,
         created_on: new Date().toISOString(),
-        profiles: []
+        profiles: [] // Will be converted based on Contentstack field type
       }
     };
+    
+    console.log('📤 Creating user in Contentstack:', { username, email });
 
     const response = await fetch(
       `${MANAGEMENT_URL}/content_types/signup_user/entries?locale=en-us`,
@@ -75,16 +85,21 @@ export const signUpUser = async (username, email, password) => {
 
     const data = await response.json();
     
+    console.log('✅ Sign up successful, entry created:', data.entry);
+    
     // Publish the entry
     if (data.entry && data.entry.uid) {
       await publishEntry(data.entry.uid);
     }
 
+    // Profiles is a native group field - comes back as array
+    const profiles = data.entry.profiles || [];
+
     return {
       uid: data.entry.uid,
       username: data.entry.username,
       email: data.entry.email,
-      profiles: data.entry.profiles || [],
+      profiles: profiles,
       created_on: data.entry.created_on
     };
   } catch (error) {
@@ -197,6 +212,11 @@ export const signInUser = async (email, password) => {
       throw new Error('Invalid email or password');
     }
 
+    // Profiles is a native group field - comes back as array
+    const profiles = user.profiles || [];
+
+    console.log('✅ Sign in successful, user profiles:', profiles);
+
     // Update last login
     await updateLastLogin(user.uid);
 
@@ -204,7 +224,7 @@ export const signInUser = async (email, password) => {
       uid: user.uid,
       username: user.username,
       email: user.email,
-      profiles: user.profiles || [],
+      profiles: profiles,
       created_on: user.created_on,
       last_login: new Date().toISOString()
     };
@@ -259,16 +279,22 @@ const updateLastLogin = async (userUid) => {
  */
 export const updateUserProfiles = async (userUid, profiles) => {
   try {
+    console.log('📝 updateUserProfiles called with:', { userUid, profiles });
+    
     if (!MANAGEMENT_TOKEN) {
-      console.warn('Management token not available, using localStorage fallback');
+      console.warn('⚠️ Management token not available, profiles will only save to localStorage');
+      console.warn('⚠️ To enable Contentstack persistence, add REACT_APP_CONTENTSTACK_MANAGEMENT_TOKEN to your .env file');
       return profiles;
     }
 
+    // Send profiles as native array (Group field in Contentstack)
     const requestBody = {
       entry: {
         profiles: profiles
       }
     };
+
+    console.log('📤 Sending to Contentstack:', JSON.stringify(requestBody, null, 2));
 
     const response = await fetch(
       `${MANAGEMENT_URL}/content_types/signup_user/entries/${userUid}?locale=en-us`,
@@ -285,17 +311,25 @@ export const updateUserProfiles = async (userUid, profiles) => {
 
     if (!response.ok) {
       const errorData = await response.json();
+      console.error('❌ Contentstack update failed:', errorData);
+      console.error('❌ Error details:', JSON.stringify(errorData, null, 2));
       throw new Error(errorData.error_message || 'Failed to update profiles');
     }
 
     const data = await response.json();
+    console.log('✅ Contentstack response:', JSON.stringify(data, null, 2));
     
     // Publish the updated entry
     await publishEntry(userUid);
     
-    return data.entry.profiles;
+    // Profiles come back as native array from group field
+    const returnedProfiles = data.entry.profiles || [];
+    
+    console.log('✅ Profiles updated successfully in Contentstack:', returnedProfiles);
+    return returnedProfiles;
   } catch (error) {
-    console.error('Error updating profiles:', error);
+    console.error('❌ Error updating profiles:', error);
+    console.error('❌ Full error details:', error.message);
     throw error;
   }
 };
@@ -440,11 +474,15 @@ export const getUserByUid = async (userUid) => {
 
     if (deliveryResponse.ok) {
       const data = await deliveryResponse.json();
+      
+      // Profiles is a native group field - comes back as array
+      const profiles = data.entry.profiles || [];
+      
       return {
         uid: data.entry.uid,
         username: data.entry.username,
         email: data.entry.email,
-        profiles: data.entry.profiles || [],
+        profiles: profiles,
         created_on: data.entry.created_on,
         last_login: data.entry.last_login
       };
@@ -466,11 +504,15 @@ export const getUserByUid = async (userUid) => {
       if (managementResponse.ok) {
         const managementData = await managementResponse.json();
         console.info('User found in draft entries');
+        
+        // Profiles is a native group field - comes back as array
+        const profiles = managementData.entry.profiles || [];
+        
         return {
           uid: managementData.entry.uid,
           username: managementData.entry.username,
           email: managementData.entry.email,
-          profiles: managementData.entry.profiles || [],
+          profiles: profiles,
           created_on: managementData.entry.created_on,
           last_login: managementData.entry.last_login
         };

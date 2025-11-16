@@ -25,6 +25,57 @@ const Stack = Contentstack.Stack({
   region: process.env.REACT_APP_CONTENTSTACK_REGION || 'us'
 });
 
+/**
+ * Get variant aliases from Contentstack Personalize SDK
+ * These aliases are used to fetch personalized content variants
+ */
+const getVariantAliases = () => {
+  try {
+    // Check if Personalize SDK is available and has variant aliases
+    if (window.csPersonalize && typeof window.csPersonalize.getVariantAliases === 'function') {
+      const aliases = window.csPersonalize.getVariantAliases();
+      if (aliases && aliases.length > 0) {
+        console.log('🔖 Using variant aliases from Personalize SDK:', aliases);
+        return aliases;
+      }
+    }
+    
+    // Fallback: check if variant aliases are stored globally
+    if (window.__PERSONALIZE_VARIANTS__ && window.__PERSONALIZE_VARIANTS__.length > 0) {
+      console.log('🔖 Using stored variant aliases:', window.__PERSONALIZE_VARIANTS__);
+      return window.__PERSONALIZE_VARIANTS__;
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Error getting variant aliases:', error);
+    return [];
+  }
+};
+
+/**
+ * Add personalization to a Contentstack query using Variant Aliases
+ * This is the proper way to use Contentstack Personalize SDK
+ */
+const addPersonalizationToQuery = (query) => {
+  try {
+    const variantAliases = getVariantAliases();
+    
+    if (variantAliases && variantAliases.length > 0) {
+      // Add variant aliases to the query
+      // This tells Contentstack to return personalized variants
+      query.variants(variantAliases);
+      console.log('✅ Added personalization variants to query:', variantAliases);
+    } else {
+      console.log('ℹ️ No variant aliases available - returning default content');
+    }
+  } catch (error) {
+    console.error('Error adding personalization to query:', error);
+  }
+  
+  return query;
+};
+
 // Validate configuration
 const validateConfig = () => {
   const apiKey = process.env.REACT_APP_CONTENTSTACK_API_KEY;
@@ -209,7 +260,11 @@ class DataStore {
   async _fetchDirectors() {
     try {
       console.log('📋 Fetching directors...');
-      const Query = Stack.ContentType('director').Query();
+      let Query = Stack.ContentType('director').Query();
+      
+      // Add personalization for directors
+      Query = addPersonalizationToQuery(Query);
+      
       const result = await Query.toJSON().find();
       
       const entries = result[0] || [];
@@ -237,7 +292,11 @@ class DataStore {
   async _fetchGenres() {
     try {
       console.log('📋 Fetching genres...');
-      const Query = Stack.ContentType('genre').Query();
+      let Query = Stack.ContentType('genre').Query();
+      
+      // Add personalization
+      Query = addPersonalizationToQuery(Query);
+      
       const result = await Query.toJSON().find();
       
       const entries = result[0] || [];
@@ -264,7 +323,10 @@ class DataStore {
   async _fetchActors() {
     try {
       console.log('📋 Fetching actors...');
-      const Query = Stack.ContentType('actor').Query();
+      let Query = Stack.ContentType('actor').Query();
+      
+      // Add personalization for actors
+      Query = addPersonalizationToQuery(Query);
       
       // Include the movies reference - movies is an array inside each filmography group item
       const result = await Query
@@ -347,7 +409,11 @@ class DataStore {
   async _fetchCollections() {
     try {
       console.log('📋 Fetching collections...');
-      const Query = Stack.ContentType('collection').Query();
+      let Query = Stack.ContentType('collection').Query();
+      
+      // Add personalization for collections
+      Query = addPersonalizationToQuery(Query);
+      
       const result = await Query
         .includeReference('movies')
         .toJSON()
@@ -377,7 +443,11 @@ class DataStore {
   async _fetchMovies() {
     try {
       console.log('📋 Fetching movies...');
-      const Query = Stack.ContentType('movie').Query();
+      let Query = Stack.ContentType('movie').Query();
+      
+      // Add personalization - This is the key part for personalized content!
+      Query = addPersonalizationToQuery(Query);
+      
       const result = await Query
         .includeReference('genre')
         .includeReference('director')

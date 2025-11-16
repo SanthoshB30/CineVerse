@@ -3,10 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 const AVATAR_OPTIONS = [
-  '👤', '🎭', '🎬', '🎪', '🎨', '🎯', '🎮', '🎲',
-  '🌟', '⭐', '💫', '✨', '🔥', '💎', '👑', '🎩',
-  '🦸', '🦹', '🧙', '🧛', '🧜', '🧚', '👻', '👽',
-  '🐶', '🐱', '🐼', '🐨', '🦊', '🦁', '🐯', '🐸'
+  '😀', '😎', '🤓', '😊', '🥳', '🤩',
+  '🐶', '🐱', '🐼', '🦁', '🐯', '🐸'
 ];
 
 const ManageProfilesPage = () => {
@@ -16,7 +14,9 @@ const ManageProfilesPage = () => {
   const [formData, setFormData] = useState({
     name: '',
     avatar: AVATAR_OPTIONS[0],
-    isKids: false
+    isKids: false,
+    preferredLanguage: 'english',
+    favoriteGenre: ''
   });
   const [error, setError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -33,7 +33,9 @@ const ManageProfilesPage = () => {
     setFormData({
       name: '',
       avatar: AVATAR_OPTIONS[0],
-      isKids: false
+      isKids: false,
+      preferredLanguage: 'english',
+      favoriteGenre: ''
     });
     setError('');
   };
@@ -50,10 +52,11 @@ const ManageProfilesPage = () => {
     }
 
     const newProfile = {
-      id: Date.now().toString(),
-      name: formData.name.trim(),
+      profile_name: formData.name.trim(),
       avatar: formData.avatar,
-      isKids: formData.isKids
+      is_kid: formData.isKids,
+      preferred_language: formData.preferredLanguage,
+      favorite_genre: formData.favoriteGenre || null
     };
 
     const updatedProfiles = [...profiles, newProfile];
@@ -64,12 +67,15 @@ const ManageProfilesPage = () => {
     setShowCreateForm(false);
   };
 
-  const handleEditProfile = (profile) => {
-    setEditingProfile(profile.id);
+  const handleEditProfile = (profileIndex) => {
+    const profile = profiles[profileIndex];
+    setEditingProfile(profileIndex);
     setFormData({
-      name: profile.name,
+      name: profile.profile_name,
       avatar: profile.avatar,
-      isKids: profile.isKids || false
+      isKids: profile.is_kid || false,
+      preferredLanguage: profile.preferred_language || 'english',
+      favoriteGenre: profile.favorite_genre || ''
     });
     setShowCreateForm(false);
   };
@@ -80,9 +86,16 @@ const ManageProfilesPage = () => {
       return;
     }
 
-    const updatedProfiles = profiles.map(p => 
-      p.id === editingProfile 
-        ? { ...p, name: formData.name.trim(), avatar: formData.avatar, isKids: formData.isKids }
+    const updatedProfiles = profiles.map((p, index) => 
+      index === editingProfile 
+        ? { 
+            ...p, 
+            profile_name: formData.name.trim(), 
+            avatar: formData.avatar, 
+            is_kid: formData.isKids,
+            preferred_language: formData.preferredLanguage,
+            favorite_genre: formData.favoriteGenre || null
+          }
         : p
     );
 
@@ -93,14 +106,14 @@ const ManageProfilesPage = () => {
     setEditingProfile(null);
   };
 
-  const handleDeleteProfile = (profileId) => {
-    if (deleteConfirm === profileId) {
-      const updatedProfiles = profiles.filter(p => p.id !== profileId);
+  const handleDeleteProfile = (profileIndex) => {
+    if (deleteConfirm === profileIndex) {
+      const updatedProfiles = profiles.filter((_, index) => index !== profileIndex);
       setProfiles(updatedProfiles);
       updateUserProfiles(updatedProfiles);
       setDeleteConfirm(null);
     } else {
-      setDeleteConfirm(profileId);
+      setDeleteConfirm(profileIndex);
       setTimeout(() => setDeleteConfirm(null), 3000);
     }
   };
@@ -130,16 +143,26 @@ const ManageProfilesPage = () => {
 
         {/* Profiles List */}
         <div className="profiles-management-grid">
-          {profiles.map((profile) => (
-            <div key={profile.id} className="manage-profile-card">
+          {profiles.map((profile, index) => (
+            <div key={profile._metadata?.uid || index} className="manage-profile-card">
               <div className="profile-card-header">
                 <div className="profile-display">
-                  <div className={`profile-avatar-large ${profile.isKids ? 'kids-profile' : ''}`}>
+                  <div className={`profile-avatar-large ${profile.is_kid ? 'kids-profile' : ''}`}>
                     {profile.avatar}
                   </div>
                   <div className="profile-details">
-                    <h3 className="profile-card-name">{profile.name}</h3>
-                    {profile.isKids && <span className="kids-badge">👶 Kids Profile</span>}
+                    <h3 className="profile-card-name">{profile.profile_name}</h3>
+                    {profile.is_kid && <span className="kids-badge">👶 Kids Profile</span>}
+                    {profile.preferred_language && (
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                        🌐 Language: <span style={{ textTransform: 'capitalize' }}>{profile.preferred_language}</span>
+                      </div>
+                    )}
+                    {profile.favorite_genre && (
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
+                        🎬 Favorite: <span style={{ textTransform: 'capitalize' }}>{profile.favorite_genre}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -147,15 +170,15 @@ const ManageProfilesPage = () => {
               <div className="profile-card-actions">
                 <button
                   className="btn-action btn-edit-action"
-                  onClick={() => handleEditProfile(profile)}
+                  onClick={() => handleEditProfile(index)}
                 >
                   ✏️ Edit
                 </button>
                 <button
-                  className={`btn-action btn-delete-action ${deleteConfirm === profile.id ? 'confirm' : ''}`}
-                  onClick={() => handleDeleteProfile(profile.id)}
+                  className={`btn-action btn-delete-action ${deleteConfirm === index ? 'confirm' : ''}`}
+                  onClick={() => handleDeleteProfile(index)}
                 >
-                  {deleteConfirm === profile.id ? '⚠️ Confirm?' : '🗑️ Delete'}
+                  {deleteConfirm === index ? '⚠️ Confirm?' : '🗑️ Delete'}
                 </button>
               </div>
             </div>
@@ -227,6 +250,48 @@ const ManageProfilesPage = () => {
                 </p>
               </div>
 
+              <div className="form-group">
+                <label>🌐 Preferred Language</label>
+                <select
+                  className="form-input"
+                  value={formData.preferredLanguage}
+                  onChange={(e) => setFormData({ ...formData, preferredLanguage: e.target.value })}
+                >
+                  <option value="english">English (Hollywood)</option>
+                  <option value="tamil">Tamil</option>
+                  <option value="hindi">Hindi</option>
+                  <option value="telugu">Telugu</option>
+                  <option value="malayalam">Malayalam</option>
+                  <option value="kannada">Kannada</option>
+                </select>
+                <p className="form-help-text">
+                  Movies in this language will be prioritized
+                </p>
+              </div>
+
+              <div className="form-group">
+                <label>🎬 Favorite Genre (Optional)</label>
+                <select
+                  className="form-input"
+                  value={formData.favoriteGenre}
+                  onChange={(e) => setFormData({ ...formData, favoriteGenre: e.target.value })}
+                >
+                  <option value="">Select a genre...</option>
+                  <option value="action">Action</option>
+                  <option value="comedy">Comedy</option>
+                  <option value="drama">Drama</option>
+                  <option value="horror">Horror</option>
+                  <option value="sci-fi">Sci-Fi</option>
+                  <option value="thriller">Thriller</option>
+                  <option value="romance">Romance</option>
+                  <option value="adventure">Adventure</option>
+                  <option value="animation">Animation</option>
+                </select>
+                <p className="form-help-text">
+                  Get personalized recommendations based on your favorite genre
+                </p>
+              </div>
+
               {error && (
                 <div className="form-error">
                   ⚠️ {error}
@@ -262,7 +327,7 @@ const ManageProfilesPage = () => {
             <span className="stat-label">Available Slots</span>
           </div>
           <div className="stat-item">
-            <span className="stat-value">{profiles.filter(p => p.isKids).length}</span>
+            <span className="stat-value">{profiles.filter(p => p.is_kid).length}</span>
             <span className="stat-label">Kids Profiles</span>
           </div>
         </div>

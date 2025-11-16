@@ -10,6 +10,7 @@
     "eject": "react-scripts eject"
   },
   "dependencies": {
+    "@contentstack/personalize-edge-sdk": "^1.0.19",
     "axios": "^1.6.2",
     "contentstack": "^3.20.1",
     "crypto-js": "^4.2.0",

@@ -46,10 +46,15 @@ const LoginPage = () => {
       const result = await login(email, password, rememberMe);
       
       if (result.success) {
+        console.log('🎉 Login successful. User data:', result.user);
+        console.log('📊 User profiles:', result.user.profiles);
+        
         // Check if user has profiles, otherwise redirect to profile creation
         if (result.user.profiles && result.user.profiles.length > 0) {
+          console.log('✅ User has profiles, navigating to select-profile');
           navigate('/select-profile');
         } else {
+          console.log('⚠️ User has no profiles, navigating to create-profile');
           navigate('/create-profile');
         }
       } else {
@@ -57,6 +62,7 @@ const LoginPage = () => {
         setPassword(''); // Clear password on error
       }
     } catch (err) {
+      console.error('❌ Login exception:', err);
       setError(err.message || 'An error occurred during login');
       setPassword('');
     } finally {

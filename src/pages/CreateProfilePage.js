@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getUpcomingMovies, getImageUrl } from '../api/contentstack';
 import { trackProfileCreation } from '../services/analytics';
+import { setProfileTraits } from '../personalize/personalizeHelpers';
 
 const AVATAR_OPTIONS = [
-  '👤', '🎭', '🎬', '🎪', '🎨', '🎯', '🎮', '🎲',
-  '🌟', '⭐', '💫', '✨', '🔥', '💎', '👑', '🎩',
-  '🦸', '🦹', '🧙', '🧛', '🧜', '🧚', '👻', '👽'
+  '😀', '😎', '🤓', '😊', '🥳', '🤩',
+  '🐶', '🐱', '🐼', '🦁', '🐯', '🐸'
 ];
 
 const CreateProfilePage = () => {
@@ -15,6 +15,9 @@ const CreateProfilePage = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0]);
+  const [isKid, setIsKid] = useState(false);
+  const [preferredLanguage, setPreferredLanguage] = useState('english');
+  const [favoriteGenre, setFavoriteGenre] = useState('');
   const [error, setError] = useState('');
   const [backgroundImages, setBackgroundImages] = useState([]);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -27,7 +30,10 @@ const CreateProfilePage = () => {
     
     // Load existing profiles if any
     if (user?.profiles) {
+      console.log('📥 Loading existing profiles from user:', user.profiles);
       setProfiles(user.profiles);
+    } else {
+      console.log('⚠️ No existing profiles found for user');
     }
   }, [user]);
 
@@ -83,7 +89,7 @@ const CreateProfilePage = () => {
     }
   };
 
-  const handleCreateProfile = () => {
+  const handleCreateProfile = async () => {
     if (!newProfileName.trim()) {
       setError('Please enter a profile name');
       return;
@@ -95,22 +101,42 @@ const CreateProfilePage = () => {
     }
 
     const newProfile = {
-      id: Date.now().toString(),
-      name: newProfileName.trim(),
-      avatar: selectedAvatar
+      profile_name: newProfileName.trim(),
+      avatar: selectedAvatar,
+      is_kid: isKid,
+      preferred_language: preferredLanguage,
+      favorite_genre: favoriteGenre || null
     };
 
+    console.log('🎭 Creating new profile:', newProfile);
+
     const updatedProfiles = [...profiles, newProfile];
+    console.log('📊 All profiles after creation:', updatedProfiles);
+    
     setProfiles(updatedProfiles);
-    updateUserProfiles(updatedProfiles);
     
-    // Track profile creation
-    trackProfileCreation(newProfile.id, newProfile.name);
-    
-    setNewProfileName('');
-    setSelectedAvatar(AVATAR_OPTIONS[0]);
-    setShowCreateForm(false);
-    setError('');
+    // Update user profiles (this will save to Contentstack and localStorage)
+    try {
+      await updateUserProfiles(updatedProfiles);
+      console.log('✅ Profile saved successfully');
+      
+      // Track profile creation
+      trackProfileCreation(newProfile.profile_name, newProfile.profile_name);
+      
+      // Set personalize traits for the newly created profile
+      setProfileTraits(newProfile, user);
+      
+      setNewProfileName('');
+      setSelectedAvatar(AVATAR_OPTIONS[0]);
+      setIsKid(false);
+      setPreferredLanguage('english');
+      setFavoriteGenre('');
+      setShowCreateForm(false);
+      setError('');
+    } catch (error) {
+      console.error('❌ Failed to save profile:', error);
+      setError('Failed to save profile. Please try again.');
+    }
   };
 
   const handleSelectProfile = (profile) => {
@@ -118,10 +144,22 @@ const CreateProfilePage = () => {
     navigate('/home');
   };
 
-  const handleDeleteProfile = (profileId) => {
-    const updatedProfiles = profiles.filter(p => p.id !== profileId);
+  const handleDeleteProfile = async (profileIndex) => {
+    console.log('🗑️ Deleting profile at index:', profileIndex);
+    const updatedProfiles = profiles.filter((_, index) => index !== profileIndex);
+    console.log('📊 Profiles after deletion:', updatedProfiles);
+    
     setProfiles(updatedProfiles);
-    updateUserProfiles(updatedProfiles);
+    
+    try {
+      await updateUserProfiles(updatedProfiles);
+      console.log('✅ Profile deleted successfully');
+    } catch (error) {
+      console.error('❌ Failed to delete profile:', error);
+      // Revert the deletion on error
+      setProfiles(profiles);
+      setError('Failed to delete profile. Please try again.');
+    }
   };
 
   return (
@@ -140,18 +178,21 @@ const CreateProfilePage = () => {
 
         <div className="profiles-container">
           <div className="profiles-grid">
-            {profiles.map((profile) => (
-              <div key={profile.id} className="profile-item">
+            {profiles.map((profile, index) => (
+              <div key={profile._metadata?.uid || index} className="profile-item">
                 <button
                   className="profile-avatar-button"
                   onClick={() => handleSelectProfile(profile)}
                 >
                   <div className="profile-avatar">{profile.avatar}</div>
-                  <span className="profile-name">{profile.name}</span>
+                  <span className="profile-name">
+                    {profile.profile_name}
+                    {profile.is_kid && <span style={{ fontSize: '0.9rem', marginLeft: '0.3rem' }}>👶</span>}
+                  </span>
                 </button>
                 <button
                   className="profile-delete-button"
-                  onClick={() => handleDeleteProfile(profile.id)}
+                  onClick={() => handleDeleteProfile(index)}
                   title="Delete profile"
                 >
                   ✕
@@ -201,6 +242,69 @@ const CreateProfilePage = () => {
                 autoFocus
               />
 
+              <div className="form-group" style={{ marginTop: '1.5rem', marginBottom: '1rem' }}>
+                <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                  <input
+                    type="checkbox"
+                    checked={isKid}
+                    onChange={(e) => setIsKid(e.target.checked)}
+                    style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '1rem' }}>👶 Kids Profile (Age-appropriate content)</span>
+                </label>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem', marginLeft: '1.8rem' }}>
+                  Kids profiles have restricted content and parental controls
+                </p>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '1rem', fontWeight: '500' }}>
+                  🌐 Preferred Language
+                </label>
+                <select
+                  className="form-input"
+                  value={preferredLanguage}
+                  onChange={(e) => setPreferredLanguage(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}
+                >
+                  <option value="english">English (Hollywood)</option>
+                  <option value="tamil">Tamil</option>
+                  <option value="hindi">Hindi</option>
+                  <option value="telugu">Telugu</option>
+                  <option value="malayalam">Malayalam</option>
+                  <option value="kannada">Kannada</option>
+                </select>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                  Movies in this language will be prioritized
+                </p>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '1.5rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '1rem', fontWeight: '500' }}>
+                  🎬 Favorite Genre (Optional)
+                </label>
+                <select
+                  className="form-input"
+                  value={favoriteGenre}
+                  onChange={(e) => setFavoriteGenre(e.target.value)}
+                  style={{ width: '100%', padding: '0.75rem', fontSize: '1rem' }}
+                >
+                  <option value="">Select a genre...</option>
+                  <option value="action">Action</option>
+                  <option value="comedy">Comedy</option>
+                  <option value="drama">Drama</option>
+                  <option value="horror">Horror</option>
+                  <option value="sci-fi">Sci-Fi</option>
+                  <option value="thriller">Thriller</option>
+                  <option value="romance">Romance</option>
+                  <option value="adventure">Adventure</option>
+                  <option value="animation">Animation</option>
+                </select>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
+                  Get personalized recommendations based on your favorite genre
+                </p>
+              </div>
+
               {error && (
                 <div className="error-message">
                   ⚠️ {error}
@@ -214,6 +318,9 @@ const CreateProfilePage = () => {
                     setShowCreateForm(false);
                     setError('');
                     setNewProfileName('');
+                    setIsKid(false);
+                    setPreferredLanguage('english');
+                    setFavoriteGenre('');
                   }}
                 >
                   Cancel

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { trackProfileSelection } from '../services/analytics';
+import { setProfileTraits } from '../personalize/personalizeHelpers';
 
 const SelectProfilePage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -33,8 +34,12 @@ const SelectProfilePage = () => {
 
   const handleSelectProfile = (profile) => {
     // Track profile selection
-    trackProfileSelection(profile.id, profile.name);
+    trackProfileSelection(profile._metadata?.uid || profile.profile_name, profile.profile_name);
     
+    // Set personalize traits for this profile
+    setProfileTraits(profile, user);
+    
+    // Select profile (this also calls setProfileTraits in AuthContext, but it's safe to call twice)
     selectProfile(profile);
     navigate('/home');
   };
@@ -59,14 +64,27 @@ const SelectProfilePage = () => {
 
         <div className="profiles-container">
           <div className="profiles-grid">
-            {user.profiles.map((profile) => (
-              <div key={profile.id} className="profile-item">
+            {user.profiles.map((profile, index) => (
+              <div key={profile._metadata?.uid || index} className="profile-item">
                 <button
                   className="profile-avatar-button"
                   onClick={() => handleSelectProfile(profile)}
                 >
                   <div className="profile-avatar">{profile.avatar}</div>
-                  <span className="profile-name">{profile.name}</span>
+                  <span className="profile-name">
+                    {profile.profile_name}
+                    {profile.is_kid && <span style={{ fontSize: '0.9rem', marginLeft: '0.3rem' }}>👶</span>}
+                  </span>
+                  {profile.preferred_language && (
+                    <span style={{ 
+                      fontSize: '0.75rem', 
+                      color: 'var(--text-secondary)', 
+                      marginTop: '0.25rem',
+                      textTransform: 'capitalize'
+                    }}>
+                      🌐 {profile.preferred_language}
+                    </span>
+                  )}
                 </button>
               </div>
             ))}
