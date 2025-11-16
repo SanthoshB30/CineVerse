@@ -623,16 +623,87 @@ export const getMoviesByDirector = (directorSlug) => {
 };
 
 /**
- * Search movies by title or description
+ * Enhanced search movies with metadata and context
+ * Searches primarily in title, then expands to other fields for longer queries
  */
 export const searchMovies = (searchTerm) => {
   if (!dataStore.isInitialized) return [];
   
-  const term = searchTerm.toLowerCase();
-  return dataStore.movies.filter(movie => 
-    movie.title?.toLowerCase().includes(term) ||
-    movie.description?.toLowerCase().includes(term)
-  );
+  const term = searchTerm.toLowerCase().trim();
+  if (!term) return [];
+  
+  return dataStore.movies.filter(movie => {
+    // Always search in title
+    if (movie.title?.toLowerCase().includes(term)) {
+      return true;
+    }
+    
+    // For very short queries (1-3 chars), only search title to avoid false matches
+    if (term.length <= 3) {
+      return false;
+    }
+    
+    // For longer queries, search in other fields
+    // Search in description (for words, not substrings within words)
+    if (movie.description) {
+      const words = movie.description.toLowerCase().split(/\s+/);
+      if (words.some(word => word.includes(term))) {
+        return true;
+      }
+    }
+    
+    // Search in genres (full word match)
+    if (movie.genre?.some(g => {
+      const genreName = (g.name || g.title || '').toLowerCase();
+      return genreName.includes(term) || genreName.split(/\s+/).some(word => word.startsWith(term));
+    })) {
+      return true;
+    }
+    
+    // Search in directors (name matching)
+    if (movie.director?.some(d => {
+      const directorName = (d.name || d.title || '').toLowerCase();
+      return directorName.includes(term) || directorName.split(/\s+/).some(word => word.startsWith(term));
+    })) {
+      return true;
+    }
+    
+    // Search in actors (if available)
+    if (movie.actors?.some(a => {
+      const actorName = (a.name || a.title || '').toLowerCase();
+      return actorName.includes(term) || actorName.split(/\s+/).some(word => word.startsWith(term));
+    })) {
+      return true;
+    }
+    
+    // Search in release year
+    if (movie.release_year?.toString().includes(term)) {
+      return true;
+    }
+    
+    return false;
+  }).sort((a, b) => {
+    // Prioritize exact title matches
+    const aExact = a.title?.toLowerCase() === term;
+    const bExact = b.title?.toLowerCase() === term;
+    if (aExact && !bExact) return -1;
+    if (!aExact && bExact) return 1;
+    
+    // Then prioritize title starts with
+    const aStarts = a.title?.toLowerCase().startsWith(term);
+    const bStarts = b.title?.toLowerCase().startsWith(term);
+    if (aStarts && !bStarts) return -1;
+    if (!aStarts && bStarts) return 1;
+    
+    // Then any title matches
+    const aTitle = a.title?.toLowerCase().includes(term);
+    const bTitle = b.title?.toLowerCase().includes(term);
+    if (aTitle && !bTitle) return -1;
+    if (!aTitle && bTitle) return 1;
+    
+    // Then sort by rating
+    return (b.rating || 0) - (a.rating || 0);
+  });
 };
 
 /**

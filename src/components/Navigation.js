@@ -17,7 +17,8 @@ const Navigation = () => {
     <nav className="navigation">
       <div className="nav-container">
         <Link to="/home" className="nav-logo">
-          🎬 CineVerse
+          <img src="/images/cv1.png" alt="CineVerse" className="nav-logo-image" />
+          <span className="nav-logo-text">CineVerse</span>
         </Link>
 
         <div className={`nav-links ${isMenuOpen ? 'active' : ''}`}>
