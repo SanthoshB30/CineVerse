@@ -5,6 +5,7 @@
 
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import Personalize from '@contentstack/personalize-edge-sdk';
+import { getPersonalizationParamsFromUrl } from '../personalize/urlHelpers';
 
 const PersonalizeContext = createContext(null);
 
@@ -59,12 +60,24 @@ export function PersonalizeProvider({ children }) {
 
   useEffect(() => {
     getPersonalizeInstance()
-      .then((instance) => {
+      .then(async (instance) => {
         setSdk(instance);
         
         // Make it globally available for non-React code
         if (instance) {
           window.csPersonalize = instance;
+          
+          // Initialize with URL parameters if present
+          const urlParams = getPersonalizationParamsFromUrl();
+          if (Object.keys(urlParams).length > 0) {
+            console.log('🔗 Initializing Personalize with URL parameters:', urlParams);
+            try {
+              await instance.set(urlParams);
+              console.log('✅ URL parameters applied to Personalize SDK');
+            } catch (error) {
+              console.warn('⚠️ Failed to apply URL parameters:', error);
+            }
+          }
         }
       });
   }, []);

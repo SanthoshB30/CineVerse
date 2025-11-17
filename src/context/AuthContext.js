@@ -1,6 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { signUpUser, signInUser, updateUserProfiles as updateProfilesAPI } from '../api/auth';
-import { setProfileTraits, clearPersonalizeTraits } from '../personalize/personalizeHelpers';
+import { setProfileTraits, clearPersonalizeTraits, updateUrlWithPersonalizationParams } from '../personalize/personalizeHelpers';
 
 const AuthContext = createContext(null);
 
@@ -176,6 +176,19 @@ export const AuthProvider = ({ children }) => {
     // Store selected profile
     const storage = localStorage.getItem('cineverse_user') ? localStorage : sessionStorage;
     storage.setItem('cineverse_selected_profile', JSON.stringify(profile));
+    
+    // Update URL with personalization parameters
+    const urlParams = {};
+    if (profile.preferred_language) {
+      urlParams.preferred_language = profile.preferred_language;
+    }
+    if (profile.favorite_genre) {
+      urlParams.favorite_genre = profile.favorite_genre;
+    }
+    if (profile.is_kid) {
+      urlParams.is_kid = 'true';
+    }
+    updateUrlWithPersonalizationParams(urlParams);
     
     // Set Personalize traits globally
     setProfileTraits(profile, user);

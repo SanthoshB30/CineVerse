@@ -41,7 +41,10 @@ const SelectProfilePage = () => {
     
     // Select profile (this also calls setProfileTraits in AuthContext, but it's safe to call twice)
     selectProfile(profile);
-    navigate('/home');
+    
+    // Navigate with preferred_language in URL for Personalization
+    const preferredLanguage = profile.preferred_language || 'english';
+    navigate(`/home?preferred_language=${preferredLanguage}`);
   };
 
   if (!user?.profiles || user.profiles.length === 0) {

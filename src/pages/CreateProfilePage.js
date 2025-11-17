@@ -135,7 +135,10 @@ const CreateProfilePage = () => {
 
   const handleSelectProfile = (profile) => {
     selectProfile(profile);
-    navigate('/home');
+    
+    // Navigate with preferred_language in URL for Personalization
+    const preferredLanguage = profile.preferred_language || 'english';
+    navigate(`/home?preferred_language=${preferredLanguage}`);
   };
 
   const handleDeleteProfile = async (profileIndex) => {

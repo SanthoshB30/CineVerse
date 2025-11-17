@@ -6,6 +6,20 @@
  */
 
 import { getPersonalizeSdk } from '../context/PersonalizeContext';
+import { 
+  getUrlParams, 
+  getPreferredLanguageFromUrl, 
+  getPersonalizationParamsFromUrl,
+  updateUrlWithPersonalizationParams 
+} from './urlHelpers';
+
+// Re-export URL helpers for convenience
+export { 
+  getUrlParams, 
+  getPreferredLanguageFromUrl, 
+  getPersonalizationParamsFromUrl,
+  updateUrlWithPersonalizationParams 
+};
 
 /**
  * Set Profile Traits in Personalize SDK
@@ -55,13 +69,22 @@ export async function setProfileTraits(profile = {}, user = {}) {
       profile_name: profile.profile_name || 'guest'
     };
 
-    // Add language preference
-    if (profile.preferred_language) {
+    // Read URL parameters for personalization (priority)
+    const urlParams = getPersonalizationParamsFromUrl();
+    
+    // Add language preference (URL takes precedence over profile)
+    if (urlParams.preferred_language) {
+      traits.preferred_language = String(urlParams.preferred_language).toLowerCase();
+      console.log('  🔗 Using preferred_language from URL:', traits.preferred_language);
+    } else if (profile.preferred_language) {
       traits.preferred_language = String(profile.preferred_language).toLowerCase();
     }
 
-    // Add genre preference
-    if (profile.favorite_genre) {
+    // Add genre preference (URL takes precedence)
+    if (urlParams.favorite_genre) {
+      traits.favorite_genre = String(urlParams.favorite_genre).toLowerCase();
+      console.log('  🔗 Using favorite_genre from URL:', traits.favorite_genre);
+    } else if (profile.favorite_genre) {
       traits.favorite_genre = String(profile.favorite_genre).toLowerCase();
     }
 
