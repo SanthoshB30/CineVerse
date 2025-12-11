@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import ProfileAvatar from '../components/ProfileAvatar';
 
 const SwitchProfilePage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -67,7 +68,12 @@ const SwitchProfilePage = () => {
                   className="profile-avatar-button"
                   onClick={() => handleSelectProfile(profile)}
                 >
-                  <div className="profile-avatar">{profile.avatar}</div>
+                  <ProfileAvatar
+                    avatarId={profile.avatar}
+                    size="large"
+                    variant="round"
+                    showGlow={false}
+                  />
                   <span className="profile-name">
                     {profile.profile_name}
                     {profile.is_kid && <span style={{ fontSize: '0.9rem', marginLeft: '0.3rem' }}>👶</span>}
