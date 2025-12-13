@@ -23,8 +23,6 @@ import BrowseGenresPage from './pages/BrowseGenresPage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import AllDirectorsPage from './pages/AllDirectorsPage';
 import AllActorsPage from './pages/AllActorsPage';
-import CollectionPage from './pages/CollectionPage';
-import AllCollectionsPage from './pages/AllCollectionsPage';
 import './styles/App.css';
 
 function App() {
@@ -168,36 +166,6 @@ function App() {
                     <Navigation />
                     <main className="main-content">
                       <ActorPage />
-                    </main>
-                    <ChatBot />
-                    <footer className="footer">
-                      <p>&copy; 2025 CineVerse. Your Universe of Cinema.</p>
-                    </footer>
-                  </>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/collections" element={
-                <ProtectedRoute>
-                  <>
-                    <Navigation />
-                    <main className="main-content">
-                      <AllCollectionsPage />
-                    </main>
-                    <ChatBot />
-                    <footer className="footer">
-                      <p>&copy; 2025 CineVerse. Your Universe of Cinema.</p>
-                    </footer>
-                  </>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/collection/:slug" element={
-                <ProtectedRoute>
-                  <>
-                    <Navigation />
-                    <main className="main-content">
-                      <CollectionPage />
                     </main>
                     <ChatBot />
                     <footer className="footer">

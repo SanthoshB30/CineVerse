@@ -565,47 +565,6 @@ export const getActorBySlug = async (slug) => {
 
 /**
  * ============================================================================
- * COLLECTION API FUNCTIONS
- * ============================================================================
- */
-
-// Fetch all collections
-export const getAllCollections = async () => {
-  if (USE_MOCK_DATA) {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    // Mock collections data
-    return [
-      {
-        uid: 'collection_1',
-        title: 'Top 10 This Week',
-        slug: 'top-10-this-week',
-        description: 'The most popular movies this week',
-        movies: MOCK_MOVIES.slice(0, 10)
-      },
-      {
-        uid: 'collection_2',
-        title: 'Oscar Winners',
-        slug: 'oscar-winners',
-        description: 'Award-winning films',
-        movies: MOCK_MOVIES.filter(m => m.rating >= 4.5)
-      }
-    ];
-  }
-  return DataService.getAllCollections();
-};
-
-// Fetch a single collection by slug
-export const getCollectionBySlug = async (slug) => {
-  if (USE_MOCK_DATA) {
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const collections = await getAllCollections();
-    return collections.find(c => c.slug === slug) || null;
-  }
-  return DataService.getCollectionBySlug(slug);
-};
-
-/**
- * ============================================================================
  * GENRE API FUNCTIONS
  * ============================================================================
  */
@@ -734,8 +693,6 @@ export default {
   getDirectorBySlug,
   getAllActors,
   getActorBySlug,
-  getAllCollections,
-  getCollectionBySlug,
   getAllGenres,
   getGenreBySlug,
   getReviewsByMovie,

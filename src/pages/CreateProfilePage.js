@@ -7,6 +7,7 @@ import { setProfileTraits } from '../personalize/personalizeHelpers';
 import AvatarGallery from '../components/AvatarGallery';
 import ProfileAvatar from '../components/ProfileAvatar';
 import { DEFAULT_AVATAR } from '../data/avatars';
+import logger from '../utils/logger';
 
 const CreateProfilePage = () => {
   const [profiles, setProfiles] = useState([]);
@@ -126,7 +127,7 @@ const CreateProfilePage = () => {
       setShowCreateForm(false);
       setError('');
     } catch (error) {
-      console.error('Failed to save profile:', error);
+      logger.error('Profile save failed:', error.message);
       setError('Failed to save profile. Please try again.');
     }
   };

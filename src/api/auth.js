@@ -1,4 +1,5 @@
 import CryptoJS from 'crypto-js';
+import logger from '../utils/logger';
 
 // Use environment variable or fallback (in production, use env variable only)
 const SECRET_KEY = process.env.REACT_APP_ENCRYPTION_SECRET || 'cineverse-secret-key-2025';
@@ -11,11 +12,12 @@ const MANAGEMENT_TOKEN = process.env.REACT_APP_CONTENTSTACK_MANAGEMENT_TOKEN;
 const ENVIRONMENT = process.env.REACT_APP_CONTENTSTACK_ENVIRONMENT || 'development';
 
 // Log Contentstack configuration on module load
-console.log('🔧 Contentstack Auth Configuration:');
-console.log('   API_KEY:', API_KEY ? '✅ Set' : '❌ Missing');
-console.log('   DELIVERY_TOKEN:', DELIVERY_TOKEN ? '✅ Set' : '❌ Missing');
-console.log('   MANAGEMENT_TOKEN:', MANAGEMENT_TOKEN ? '✅ Set' : '❌ Missing (profiles will only save to localStorage)');
-console.log('   ENVIRONMENT:', ENVIRONMENT);
+logger.group('Auth Configuration');
+logger.info(`API_KEY: ${API_KEY ? 'Configured' : 'Missing'}`);
+logger.info(`DELIVERY_TOKEN: ${DELIVERY_TOKEN ? 'Configured' : 'Missing'}`);
+logger.info(`MANAGEMENT_TOKEN: ${MANAGEMENT_TOKEN ? 'Configured' : 'Not set (localStorage only)'}`);
+logger.info(`ENVIRONMENT: ${ENVIRONMENT}`);
+logger.groupEnd();
 
 /**
  * Encrypt password using AES encryption
@@ -32,7 +34,7 @@ export const decryptPassword = (encryptedPassword) => {
     const bytes = CryptoJS.AES.decrypt(encryptedPassword, SECRET_KEY);
     return bytes.toString(CryptoJS.enc.Utf8);
   } catch (error) {
-    console.error('Error decrypting password:', error);
+    logger.error('Password decryption failed');
     return null;
   }
 };
@@ -62,7 +64,7 @@ export const signUpUser = async (username, email, password) => {
       }
     };
     
-    console.log('📤 Creating user in Contentstack:', { username, email });
+    logger.info('Creating user account:', { username, email });
 
     const response = await fetch(
       `${MANAGEMENT_URL}/content_types/signup_user/entries?locale=en-us`,
@@ -79,13 +81,13 @@ export const signUpUser = async (username, email, password) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('Sign up error:', errorData);
+      logger.error('Sign up failed:', errorData.error_message);
       throw new Error(errorData.error_message || 'Failed to create account');
     }
 
     const data = await response.json();
     
-    console.log('✅ Sign up successful, entry created:', data.entry);
+    logger.success('User account created successfully');
     
     // Publish the entry
     if (data.entry && data.entry.uid) {
@@ -103,7 +105,7 @@ export const signUpUser = async (username, email, password) => {
       created_on: data.entry.created_on
     };
   } catch (error) {
-    console.error('Sign up error:', error);
+    logger.error('Sign up failed:', error.message);
     throw error;
   }
 };
@@ -149,7 +151,7 @@ const checkEmailExists = async (email) => {
 
     return false;
   } catch (error) {
-    console.error('Error checking email:', error);
+    logger.error('Email verification failed:', error.message);
     return false;
   }
 };
@@ -182,7 +184,7 @@ export const signInUser = async (email, password) => {
 
     // If not found and management token available, check draft entries
     if (!user && MANAGEMENT_TOKEN) {
-      console.info('User not found in published entries, checking draft entries...');
+      logger.info('Checking draft entries for user...');
       const managementResponse = await fetch(
         `${MANAGEMENT_URL}/content_types/signup_user/entries?query=${JSON.stringify(query)}&locale=en-us`,
         {
@@ -197,7 +199,7 @@ export const signInUser = async (email, password) => {
         const managementData = await managementResponse.json();
         if (managementData.entries && managementData.entries.length > 0) {
           user = managementData.entries[0];
-          console.info('User found in draft entries');
+          logger.info('User located in draft entries');
         }
       }
     }
@@ -215,7 +217,7 @@ export const signInUser = async (email, password) => {
     // Profiles is a native group field - comes back as array
     const profiles = user.profiles || [];
 
-    console.log('✅ Sign in successful, user profiles:', profiles);
+    logger.success(`Sign in successful (${profiles.length} profiles)`);
 
     // Update last login
     await updateLastLogin(user.uid);
@@ -229,7 +231,7 @@ export const signInUser = async (email, password) => {
       last_login: new Date().toISOString()
     };
   } catch (error) {
-    console.error('Sign in error:', error);
+    logger.error('Sign in failed:', error.message);
     throw error;
   }
 };
@@ -240,7 +242,7 @@ export const signInUser = async (email, password) => {
 const updateLastLogin = async (userUid) => {
   try {
     if (!MANAGEMENT_TOKEN) {
-      console.warn('Management token not available, skipping last login update');
+      logger.warn('Management token not available, skipping last login update');
       return;
     }
 
@@ -264,12 +266,11 @@ const updateLastLogin = async (userUid) => {
     );
 
     if (response.ok) {
-      const data = await response.json();
       // Publish the updated entry
       await publishEntry(userUid);
     }
   } catch (error) {
-    console.error('Error updating last login:', error);
+    logger.error('Failed to update last login:', error.message);
     // Don't throw error, login should still succeed
   }
 };
@@ -279,11 +280,10 @@ const updateLastLogin = async (userUid) => {
  */
 export const updateUserProfiles = async (userUid, profiles) => {
   try {
-    console.log('📝 updateUserProfiles called with:', { userUid, profiles });
+    logger.info('Updating user profiles...', { userUid, profileCount: profiles.length });
     
     if (!MANAGEMENT_TOKEN) {
-      console.warn('⚠️ Management token not available, profiles will only save to localStorage');
-      console.warn('⚠️ To enable Contentstack persistence, add REACT_APP_CONTENTSTACK_MANAGEMENT_TOKEN to your .env file');
+      logger.warn('Management token not available, profiles saved to localStorage only');
       return profiles;
     }
 
@@ -293,8 +293,6 @@ export const updateUserProfiles = async (userUid, profiles) => {
         profiles: profiles
       }
     };
-
-    console.log('📤 Sending to Contentstack:', JSON.stringify(requestBody, null, 2));
 
     const response = await fetch(
       `${MANAGEMENT_URL}/content_types/signup_user/entries/${userUid}?locale=en-us`,
@@ -311,13 +309,11 @@ export const updateUserProfiles = async (userUid, profiles) => {
 
     if (!response.ok) {
       const errorData = await response.json();
-      console.error('❌ Contentstack update failed:', errorData);
-      console.error('❌ Error details:', JSON.stringify(errorData, null, 2));
+      logger.error('Profile update failed:', errorData.error_message);
       throw new Error(errorData.error_message || 'Failed to update profiles');
     }
 
     const data = await response.json();
-    console.log('✅ Contentstack response:', JSON.stringify(data, null, 2));
     
     // Publish the updated entry
     await publishEntry(userUid);
@@ -325,11 +321,10 @@ export const updateUserProfiles = async (userUid, profiles) => {
     // Profiles come back as native array from group field
     const returnedProfiles = data.entry.profiles || [];
     
-    console.log('✅ Profiles updated successfully in Contentstack:', returnedProfiles);
+    logger.success(`Profiles updated successfully (${returnedProfiles.length} profiles)`);
     return returnedProfiles;
   } catch (error) {
-    console.error('❌ Error updating profiles:', error);
-    console.error('❌ Full error details:', error.message);
+    logger.error('Profile update failed:', error.message);
     throw error;
   }
 };
@@ -360,7 +355,7 @@ const getEntryDetails = async (entryUid) => {
     }
     return null;
   } catch (error) {
-    console.error('Error getting entry details:', error);
+    logger.error('Failed to get entry details:', error.message);
     return null;
   }
 };
@@ -371,14 +366,14 @@ const getEntryDetails = async (entryUid) => {
 const publishEntry = async (entryUid) => {
   try {
     if (!MANAGEMENT_TOKEN) {
-      console.warn('Management token not available, skipping publish');
+      logger.warn('Management token not available, skipping publish');
       return;
     }
 
     // Get entry details first to check version and state
     const entryDetails = await getEntryDetails(entryUid);
     if (!entryDetails) {
-      console.warn('Could not fetch entry details, skipping publish');
+      logger.warn('Could not fetch entry details, skipping publish');
       return;
     }
 
@@ -412,46 +407,35 @@ const publishEntry = async (entryUid) => {
       
       // Handle specific error cases
       if (response.status === 422) {
-        // Entry might already be published or in a workflow
-        console.warn('Entry publish returned 422 - entry may already be published or require workflow approval:', errorData);
-        
-        // Log detailed validation errors if available
-        if (errorData?.errors) {
-          console.warn('Detailed validation errors:', JSON.stringify(errorData.errors, null, 2));
-        }
-        
         // Check if it's already published error
         if (errorData?.error_message?.includes('already published') || 
             errorData?.error_code === 'ENTRY_ALREADY_PUBLISHED') {
-          console.info('Entry is already published, continuing...');
           return; // This is not an error, just skip
         }
         
         // Check if it's a workflow issue
         if (errorData?.error_message?.includes('workflow') || 
             errorData?.error_code === 'WORKFLOW_REQUIRED') {
-          console.warn('Entry requires workflow approval. Publishing skipped.');
-          return; // Don't block the operation
+          logger.warn('Entry requires workflow approval');
+          return;
         }
 
-        // Check if it's a validation error (error_code 357 is validation failure)
+        // Check if it's a validation error
         if (errorData?.error_code === 357 || 
             errorData?.error_message?.includes('valid data') || 
             errorData?.error_message?.includes('validation') || 
             errorData?.errors) {
-          console.warn('Entry validation failed. Entry saved but not published. This is normal for draft entries.');
-          console.info('The entry is available in draft mode and can be used for authentication.');
-          return; // Don't block the operation - draft entries work fine
+          logger.info('Entry saved as draft (validation pending)');
+          return;
         }
       }
       
-      console.warn(`Failed to publish entry (${response.status}):`, errorData);
-      console.info('Entry saved successfully but not published. This is acceptable.');
+      logger.warn(`Publish skipped (${response.status}): Entry saved successfully`);
     } else {
-      console.info('Entry published successfully');
+      logger.success('Entry published');
     }
   } catch (error) {
-    console.error('Error publishing entry:', error);
+    logger.error('Publish operation failed:', error.message);
     // Don't throw - publishing failure shouldn't break the operation
   }
 };
@@ -490,7 +474,7 @@ export const getUserByUid = async (userUid) => {
 
     // If not found and management token available, check draft entries
     if (MANAGEMENT_TOKEN) {
-      console.info('User not found in published entries, checking draft entries...');
+      logger.info('Checking draft entries for user...');
       const managementResponse = await fetch(
         `${MANAGEMENT_URL}/content_types/signup_user/entries/${userUid}?locale=en-us`,
         {
@@ -503,7 +487,7 @@ export const getUserByUid = async (userUid) => {
 
       if (managementResponse.ok) {
         const managementData = await managementResponse.json();
-        console.info('User found in draft entries');
+        logger.info('User located in draft entries');
         
         // Profiles is a native group field - comes back as array
         const profiles = managementData.entry.profiles || [];
@@ -521,7 +505,7 @@ export const getUserByUid = async (userUid) => {
 
     throw new Error('Failed to fetch user');
   } catch (error) {
-    console.error('Error fetching user:', error);
+    logger.error('Failed to fetch user:', error.message);
     throw error;
   }
 };

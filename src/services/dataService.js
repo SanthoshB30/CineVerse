@@ -10,6 +10,7 @@
  */
 
 import * as Contentstack from 'contentstack';
+import logger from '../utils/logger';
 
 /**
  * ============================================================================
@@ -35,20 +36,20 @@ const getVariantAliases = () => {
     if (window.csPersonalize && typeof window.csPersonalize.getVariantAliases === 'function') {
       const aliases = window.csPersonalize.getVariantAliases();
       if (aliases && aliases.length > 0) {
-        console.log('🔖 Using variant aliases from Personalize SDK:', aliases);
+        logger.info('Using variant aliases from Personalize SDK:', aliases);
         return aliases;
       }
     }
     
     // Fallback: check if variant aliases are stored globally
     if (window.__PERSONALIZE_VARIANTS__ && window.__PERSONALIZE_VARIANTS__.length > 0) {
-      console.log('🔖 Using stored variant aliases:', window.__PERSONALIZE_VARIANTS__);
+      logger.info('Using stored variant aliases:', window.__PERSONALIZE_VARIANTS__);
       return window.__PERSONALIZE_VARIANTS__;
     }
     
     return [];
   } catch (error) {
-    console.error('Error getting variant aliases:', error);
+    logger.error('Failed to get variant aliases:', error);
     return [];
   }
 };
@@ -65,12 +66,12 @@ const addPersonalizationToQuery = (query) => {
       // Add variant aliases to the query
       // This tells Contentstack to return personalized variants
       query.variants(variantAliases);
-      console.log('✅ Added personalization variants to query:', variantAliases);
+      logger.success('Personalization variants applied:', variantAliases);
     } else {
-      console.log('ℹ️ No variant aliases available - returning default content');
+      logger.info('No variant aliases available - returning default content');
     }
   } catch (error) {
-    console.error('Error adding personalization to query:', error);
+    logger.error('Failed to add personalization to query:', error);
   }
   
   return query;
@@ -82,19 +83,16 @@ const validateConfig = () => {
   const deliveryToken = process.env.REACT_APP_CONTENTSTACK_DELIVERY_TOKEN;
   
   if (!apiKey || !deliveryToken) {
-    console.error('❌ Contentstack credentials missing!');
-    console.error('Please check your .env file has:');
-    console.error('  - REACT_APP_CONTENTSTACK_API_KEY');
-    console.error('  - REACT_APP_CONTENTSTACK_DELIVERY_TOKEN');
-    console.error('  - REACT_APP_CONTENTSTACK_ENVIRONMENT');
-    console.error('  - REACT_APP_CONTENTSTACK_REGION');
+    logger.error('Contentstack credentials missing. Please verify .env configuration.');
     return false;
   }
   
-  console.log('✅ Contentstack configuration found');
-  console.log(`   Environment: ${process.env.REACT_APP_CONTENTSTACK_ENVIRONMENT || 'testing'}`);
-  console.log(`   Region: ${process.env.REACT_APP_CONTENTSTACK_REGION || 'us'}`);
-  console.log(`   API Key: ${apiKey.substring(0, 10)}...`);
+  logger.group('Contentstack Configuration');
+  logger.success('Configuration validated');
+  logger.info(`Environment: ${process.env.REACT_APP_CONTENTSTACK_ENVIRONMENT || 'testing'}`);
+  logger.info(`Region: ${process.env.REACT_APP_CONTENTSTACK_REGION || 'us'}`);
+  logger.info(`API Key: ${apiKey.substring(0, 10)}...`);
+  logger.groupEnd();
   return true;
 };
 
@@ -110,7 +108,6 @@ class DataStore {
     this.genres = [];
     this.directors = [];
     this.actors = [];
-    this.collections = [];
     this.reviews = [];
     this.appSettings = null;
     this.isInitialized = false;
@@ -141,8 +138,8 @@ class DataStore {
    */
   async _loadFromContentstack() {
     try {
-      console.log('🚀 Loading data from Contentstack...');
-      console.log('-----------------------------------');
+      logger.group('Contentstack Data Loading');
+      logger.info('Initializing data fetch...');
       
       // Validate configuration first
       if (!validateConfig()) {
@@ -152,13 +149,12 @@ class DataStore {
       const startTime = Date.now();
 
       // Fetch all content types sequentially to see which one fails
-      console.log('\n📦 Fetching content types...\n');
+      logger.info('Fetching content types...');
       
       const appSettings = await this._fetchAppSettings();
       const directors = await this._fetchDirectors();
       const genres = await this._fetchGenres();
       const actors = await this._fetchActors();
-      const collections = await this._fetchCollections();
       const movies = await this._fetchMovies();
       const reviews = await this._fetchReviews();
 
@@ -167,7 +163,6 @@ class DataStore {
       this.directors = directors;
       this.genres = genres;
       this.actors = actors;
-      this.collections = collections;
       this.movies = movies;
       this.reviews = reviews;
 
@@ -178,25 +173,21 @@ class DataStore {
       const endTime = Date.now();
       const loadTime = ((endTime - startTime) / 1000).toFixed(2);
 
-      console.log('-----------------------------------');
-      console.log(`✅ Data loaded successfully from Contentstack in ${loadTime}s:`);
-      console.log(`   - App Settings: ${this.appSettings ? '✓' : '✗'}`);
-      console.log(`   - Directors: ${this.directors.length}`);
-      console.log(`   - Genres: ${this.genres.length}`);
-      console.log(`   - Actors: ${this.actors.length}`);
-      console.log(`   - Collections: ${this.collections.length}`);
-      console.log(`   - Movies: ${this.movies.length}`);
-      console.log(`   - Reviews: ${this.reviews.length}`);
-      console.log('-----------------------------------\n');
+      logger.separator();
+      logger.success(`Data loaded successfully in ${loadTime}s`);
+      logger.data('Content Summary', {
+        appSettings: this.appSettings ? 'Loaded' : 'Not found',
+        directors: this.directors.length,
+        genres: this.genres.length,
+        actors: this.actors.length,
+        movies: this.movies.length,
+        reviews: this.reviews.length
+      });
+      logger.groupEnd();
 
       // Warning if no data
       if (this.genres.length === 0) {
-        console.warn('⚠️  WARNING: No genres found!');
-        console.warn('   Make sure you have:');
-        console.warn('   1. Created "genre" content type in Contentstack');
-        console.warn('   2. Added genre entries');
-        console.warn('   3. PUBLISHED the genre entries');
-        console.warn('   4. Environment matches:', process.env.REACT_APP_CONTENTSTACK_ENVIRONMENT || 'testing');
+        logger.warn('No genres found. Verify content type exists and entries are published.');
       }
 
       return {
@@ -207,15 +198,13 @@ class DataStore {
           genres: this.genres.length,
           directors: this.directors.length,
           actors: this.actors.length,
-          collections: this.collections.length,
           reviews: this.reviews.length,
           loadTime: loadTime
         }
       };
     } catch (error) {
-      console.error('❌ Error loading data from Contentstack:', error);
-      console.error('Error details:', error.message);
-      console.error('Stack:', error.stack);
+      logger.error('Failed to load data from Contentstack:', error.message);
+      logger.groupEnd();
       this.initializationPromise = null;
       return {
         success: false,
@@ -230,12 +219,12 @@ class DataStore {
    */
   async _fetchAppSettings() {
     try {
-      console.log('📋 Fetching app settings...');
+      logger.info('Fetching app settings...');
       const Query = Stack.ContentType('app_settings').Query();
       const result = await Query.toJSON().find();
       
       const entries = result[0] || [];
-      console.log(`   Found ${entries.length} app settings entries`);
+      logger.info(`App settings: ${entries.length} entries found`);
       
       // Return the first entry (singleton)
       if (entries.length > 0) {
@@ -248,8 +237,7 @@ class DataStore {
       }
       return null;
     } catch (error) {
-      console.error('❌ Error fetching app settings:', error.message || error);
-      console.error('   Full error:', error);
+      logger.error('Failed to fetch app settings:', error.message);
       return null;
     }
   }
@@ -259,7 +247,7 @@ class DataStore {
    */
   async _fetchDirectors() {
     try {
-      console.log('📋 Fetching directors...');
+      logger.info('Fetching directors...');
       let Query = Stack.ContentType('director').Query();
       
       // Add personalization for directors
@@ -268,7 +256,7 @@ class DataStore {
       const result = await Query.toJSON().find();
       
       const entries = result[0] || [];
-      console.log(`   Found ${entries.length} directors`);
+      logger.info(`Directors: ${entries.length} entries found`);
       
       return entries.map(entry => ({
         uid: entry.uid,
@@ -280,8 +268,7 @@ class DataStore {
         profile_image: entry.profile_image
       }));
     } catch (error) {
-      console.error('❌ Error fetching directors:', error.message || error);
-      console.error('   Full error:', error);
+      logger.error('Failed to fetch directors:', error.message);
       return [];
     }
   }
@@ -291,7 +278,7 @@ class DataStore {
    */
   async _fetchGenres() {
     try {
-      console.log('📋 Fetching genres...');
+      logger.info('Fetching genres...');
       let Query = Stack.ContentType('genre').Query();
       
       // Add personalization
@@ -300,7 +287,7 @@ class DataStore {
       const result = await Query.toJSON().find();
       
       const entries = result[0] || [];
-      console.log(`   Found ${entries.length} genres`);
+      logger.info(`Genres: ${entries.length} entries found`);
       
       return entries.map(entry => ({
         uid: entry.uid,
@@ -311,8 +298,7 @@ class DataStore {
         genre_image: entry.genre_image
       }));
     } catch (error) {
-      console.error('❌ Error fetching genres:', error.message || error);
-      console.error('   Full error:', error);
+      logger.error('Failed to fetch genres:', error.message);
       return [];
     }
   }
@@ -322,7 +308,7 @@ class DataStore {
    */
   async _fetchActors() {
     try {
-      console.log('📋 Fetching actors...');
+      logger.info('Fetching actors...');
       let Query = Stack.ContentType('actor').Query();
       
       // Add personalization for actors
@@ -337,7 +323,7 @@ class DataStore {
         .find();
       
       const entries = result[0] || [];
-      console.log(`   Found ${entries.length} actors`);
+      logger.info(`Actors: ${entries.length} entries found`);
       
       return entries.map(entry => {
         // Extract movies from filmography group (which is an array of groups)
@@ -351,7 +337,6 @@ class DataStore {
               filmItem.movies.forEach(movie => {
                 // Check if movie is fully populated (has title) or just a reference (only uid)
                 if (!movie.title) {
-                  console.log(`   ⚠️  ${entry.name}: Movie reference not populated, only has:`, Object.keys(movie));
                   return;
                 }
                 
@@ -372,17 +357,9 @@ class DataStore {
                   genre: Array.isArray(movie.genre) ? movie.genre : [],
                   director: Array.isArray(movie.director) ? movie.director : []
                 });
-                
-                console.log(`   ✓ Added movie: ${movie.title} (poster: ${movie.poster_image ? 'yes' : 'no'})`);
               });
             }
           });
-          
-          if (movies.length > 0) {
-            console.log(`   ✅ ${entry.name}: ${movies.length} movie(s) loaded`);
-          } else {
-            console.log(`   ⚠️  ${entry.name}: No movies loaded (check if movies are published)`);
-          }
         }
         
         return {
@@ -397,42 +374,7 @@ class DataStore {
         };
       });
     } catch (error) {
-      console.error('❌ Error fetching actors:', error.message || error);
-      console.error('   Full error:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Fetch Collections from Contentstack
-   */
-  async _fetchCollections() {
-    try {
-      console.log('📋 Fetching collections...');
-      let Query = Stack.ContentType('collection').Query();
-      
-      // Add personalization for collections
-      Query = addPersonalizationToQuery(Query);
-      
-      const result = await Query
-        .includeReference('movies')
-        .toJSON()
-        .find();
-      
-      const entries = result[0] || [];
-      console.log(`   Found ${entries.length} collections`);
-      
-      return entries.map(entry => ({
-        uid: entry.uid,
-        title: entry.title,
-        slug: entry.slug,
-        description: entry.description,
-        featured_image: entry.featured_image,
-        movies: Array.isArray(entry.movies) ? entry.movies : []
-      }));
-    } catch (error) {
-      console.error('❌ Error fetching collections:', error.message || error);
-      console.error('   Full error:', error);
+      logger.error('Failed to fetch actors:', error.message);
       return [];
     }
   }
@@ -442,7 +384,7 @@ class DataStore {
    */
   async _fetchMovies() {
     try {
-      console.log('📋 Fetching movies...');
+      logger.info('Fetching movies...');
       let Query = Stack.ContentType('movie').Query();
       
       // Add personalization - This is the key part for personalized content!
@@ -455,7 +397,7 @@ class DataStore {
         .find();
       
       const entries = result[0] || [];
-      console.log(`   Found ${entries.length} movies`);
+      logger.info(`Movies: ${entries.length} entries found`);
       
       return entries.map(entry => ({
         uid: entry.uid,
@@ -474,8 +416,7 @@ class DataStore {
         director: Array.isArray(entry.director) ? entry.director : []
       }));
     } catch (error) {
-      console.error('❌ Error fetching movies:', error.message || error);
-      console.error('   Full error:', error);
+      logger.error('Failed to fetch movies:', error.message);
       return [];
     }
   }
@@ -485,7 +426,7 @@ class DataStore {
    */
   async _fetchReviews() {
     try {
-      console.log('📋 Fetching reviews...');
+      logger.info('Fetching reviews...');
       const Query = Stack.ContentType('reviewnew').Query();
       const result = await Query
         .includeReference('movie')
@@ -493,7 +434,7 @@ class DataStore {
         .find();
       
       const entries = result[0] || [];
-      console.log(`   Found ${entries.length} reviews`);
+      logger.info(`Reviews: ${entries.length} entries found`);
       
       return entries.map(entry => ({
         uid: entry.uid,
@@ -507,8 +448,7 @@ class DataStore {
         downvotes: entry.downvotes || 0
       }));
     } catch (error) {
-      console.error('❌ Error fetching reviews:', error.message || error);
-      console.error('   Full error:', error);
+      logger.error('Failed to fetch reviews:', error.message);
       return [];
     }
   }
@@ -517,7 +457,7 @@ class DataStore {
    * Refresh/reload data from Contentstack
    */
   async refresh() {
-    console.log('🔄 Refreshing data from Contentstack...');
+    logger.info('Refreshing data from Contentstack...');
     this.isInitialized = false;
     this.initializationPromise = null;
     return await this.initialize();
@@ -541,7 +481,6 @@ class DataStore {
       genres: this.genres.length,
       directors: this.directors.length,
       actors: this.actors.length,
-      collections: this.collections.length,
       reviews: this.reviews.length
     };
   }
@@ -609,7 +548,7 @@ export const getAppSettings = () => {
  */
 export const getAllMovies = () => {
   if (!dataStore.isInitialized) {
-    console.warn('Data store not initialized');
+    logger.warn('Data store not initialized');
     return [];
   }
   return [...dataStore.movies];
@@ -899,36 +838,6 @@ export const getActorByUid = (uid) => {
 
 /**
  * ============================================================================
- * COLLECTION QUERIES
- * ============================================================================
- */
-
-/**
- * Get all collections
- */
-export const getAllCollections = () => {
-  if (!dataStore.isInitialized) return [];
-  return [...dataStore.collections];
-};
-
-/**
- * Get collection by slug
- */
-export const getCollectionBySlug = (slug) => {
-  if (!dataStore.isInitialized) return null;
-  return dataStore.collections.find(c => c.slug === slug) || null;
-};
-
-/**
- * Get collection by UID
- */
-export const getCollectionByUid = (uid) => {
-  if (!dataStore.isInitialized) return null;
-  return dataStore.collections.find(c => c.uid === uid) || null;
-};
-
-/**
- * ============================================================================
  * REVIEW QUERIES
  * ============================================================================
  */
@@ -1039,11 +948,6 @@ export default {
   getAllActors,
   getActorBySlug,
   getActorByUid,
-  
-  // Collections
-  getAllCollections,
-  getCollectionBySlug,
-  getCollectionByUid,
   
   // Reviews
   getAllReviews,

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import logger from '../utils/logger';
 
 /**
  * Custom Hook for Review Voting
@@ -75,7 +76,7 @@ const useReviewVoting = (reviewUid) => {
 
       return { upvotes: newUpvotes, downvotes: newDownvotes };
     } catch (error) {
-      console.error('Error handling upvote:', error);
+      logger.error('Upvote handling failed:', error.message);
       throw error;
     } finally {
       setIsVoting(false);
@@ -114,7 +115,7 @@ const useReviewVoting = (reviewUid) => {
 
       return { upvotes: newUpvotes, downvotes: newDownvotes };
     } catch (error) {
-      console.error('Error handling downvote:', error);
+      logger.error('Downvote handling failed:', error.message);
       throw error;
     } finally {
       setIsVoting(false);

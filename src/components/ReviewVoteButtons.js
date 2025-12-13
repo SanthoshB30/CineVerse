@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import useReviewVoting from '../hooks/useReviewVoting';
 import { updateReviewVotes } from '../api/reviewVoting';
+import logger from '../utils/logger';
 
 /**
  * ReviewVoteButtons Component
@@ -39,7 +40,7 @@ const ReviewVoteButtons = ({ review, onVoteUpdate }) => {
       );
     } catch (err) {
       setError('Failed to record vote');
-      console.error('Upvote error:', err);
+      logger.error('Upvote failed:', err.message);
     }
   };
 
@@ -69,7 +70,7 @@ const ReviewVoteButtons = ({ review, onVoteUpdate }) => {
       );
     } catch (err) {
       setError('Failed to record vote');
-      console.error('Downvote error:', err);
+      logger.error('Downvote failed:', err.message);
     }
   };
 

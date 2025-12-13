@@ -5,6 +5,7 @@ import { getAllMovies } from '../services/dataService';
 import MovieCard from '../components/MovieCard';
 import { trackHomePage } from '../services/analytics';
 import { usePersonalizeVariants } from '../personalize/usePersonalizeVariants';
+import logger from '../utils/logger';
 
 const HomePage = () => {
   const [allMovies, setAllMovies] = useState([]);
@@ -26,7 +27,7 @@ const HomePage = () => {
   // Reload data when variants change
   useEffect(() => {
     if (variants.length > 0 && !variantLoading) {
-      console.log('🔄 Variants changed, reloading data with personalization');
+      logger.info('Variants updated, refreshing content');
       loadData();
     }
   }, [variants]);
@@ -58,14 +59,14 @@ const HomePage = () => {
       let personalizedMovies = moviesData;
       
       if (variants && variants.length > 0) {
-        console.log('🎬 Applying personalization with variants:', variants);
+        logger.info('Applying personalization:', variants);
         
         // Check for kids variant
         if (variants.some(v => v === 'kids_content' || v.includes('kids'))) {
           personalizedMovies = moviesData.filter(movie => 
             movie.age_rating === 'U' || movie.age_rating === 'PG' || !movie.age_rating
           );
-          console.log(`✅ Kids filter: ${personalizedMovies.length} kid-safe movies`);
+          logger.success(`Kids filter applied: ${personalizedMovies.length} movies`);
         }
         
         // Check for Tamil variant
@@ -73,7 +74,7 @@ const HomePage = () => {
           const tamilMovies = moviesData.filter(m => m.language === 'tamil' || m.language === 'Tamil');
           const otherMovies = moviesData.filter(m => m.language !== 'tamil' && m.language !== 'Tamil');
           personalizedMovies = [...tamilMovies, ...otherMovies];
-          console.log(`✅ Tamil prioritization: ${tamilMovies.length} Tamil movies first`);
+          logger.success(`Tamil prioritization applied: ${tamilMovies.length} movies`);
         }
         
         // Check for Action variant
@@ -85,7 +86,7 @@ const HomePage = () => {
             !m.genre?.some(g => g.name?.toLowerCase() === 'action')
           );
           personalizedMovies = [...actionMovies, ...otherMovies];
-          console.log(`✅ Action prioritization: ${actionMovies.length} action movies first`);
+          logger.success(`Action prioritization applied: ${actionMovies.length} movies`);
         }
       }
       
@@ -98,7 +99,7 @@ const HomePage = () => {
         .slice(0, 5);
       setTrendingMovies(trending.length > 0 ? trending : personalizedMovies.slice(0, 5));
     } catch (error) {
-      console.error('Error loading data:', error);
+      logger.error('Data loading failed:', error.message);
     }
     setLoading(false);
   };

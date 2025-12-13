@@ -10,25 +10,27 @@
  * Once deployed, Contentstack tracks automatically without any code changes.
  */
 
+import logger from '../utils/logger';
+
 /**
  * Track page view
  */
 export const trackPageView = (pageName, additionalData = {}) => {
-  console.log('📊 Page View:', pageName, additionalData);
+  logger.info(`Analytics: Page View - ${pageName}`);
 };
 
 /**
  * Track entry view (movie, genre, director, actor)
  */
 export const trackEntryView = (pageName, entryUid, contentType, additionalData = {}) => {
-  console.log('📊 Entry View:', { page: pageName, entry: entryUid, type: contentType, ...additionalData });
+  logger.info(`Analytics: Entry View - ${contentType}/${pageName}`);
 };
 
 /**
  * Track custom event
  */
 export const trackEvent = (eventName, eventData = {}) => {
-  console.log('📊 Event:', eventName, eventData);
+  logger.info(`Analytics: Event - ${eventName}`);
 };
 
 /**
@@ -174,16 +176,6 @@ export const trackVideoPlay = (movieUid, movieTitle) => {
   });
 };
 
-/**
- * Track Collection View
- */
-export const trackCollectionView = (collectionUid, collectionName) => {
-  trackEntryView('Collection Page', collectionUid, 'collection', {
-    name: collectionName,
-    timestamp: new Date().toISOString()
-  });
-};
-
 export default {
   trackPageView,
   trackEntryView,
@@ -200,7 +192,6 @@ export default {
   trackLogin,
   trackSignUp,
   trackReviewSubmission,
-  trackVideoPlay,
-  trackCollectionView
+  trackVideoPlay
 };
 

@@ -12,6 +12,7 @@ import {
   getPersonalizationParamsFromUrl,
   updateUrlWithPersonalizationParams 
 } from './urlHelpers';
+import logger from '../utils/logger';
 
 // Re-export URL helpers for convenience
 export { 
@@ -44,7 +45,7 @@ export {
 export async function setProfileTraits(profile = {}, user = {}) {
   // Skip if not in browser
   if (typeof window === 'undefined') {
-    console.warn('⚠️ Not in browser environment');
+    logger.warn('Not in browser environment');
     return;
   }
 
@@ -52,14 +53,12 @@ export async function setProfileTraits(profile = {}, user = {}) {
   const sdk = getPersonalizeSdk();
 
   if (!sdk) {
-    console.error('❌ Personalize SDK instance not available');
-    console.error('   Make sure PersonalizeProvider is wrapping your app');
-    console.error('   Check REACT_APP_CONTENTSTACK_PERSONALIZE_PROJECT_UID is set');
+    logger.error('Personalize SDK not available. Verify PersonalizeProvider configuration.');
     return;
   }
 
   try {
-    console.log('🎯 Setting Personalize traits for profile:', profile.profile_name || 'Unknown');
+    logger.info('Setting profile traits:', profile.profile_name || 'Unknown');
 
     // Build traits object
     const traits = {
@@ -75,7 +74,6 @@ export async function setProfileTraits(profile = {}, user = {}) {
     // Add language preference (URL takes precedence over profile)
     if (urlParams.preferred_language) {
       traits.preferred_language = String(urlParams.preferred_language).toLowerCase();
-      console.log('  🔗 Using preferred_language from URL:', traits.preferred_language);
     } else if (profile.preferred_language) {
       traits.preferred_language = String(profile.preferred_language).toLowerCase();
     }
@@ -83,7 +81,6 @@ export async function setProfileTraits(profile = {}, user = {}) {
     // Add genre preference (URL takes precedence)
     if (urlParams.favorite_genre) {
       traits.favorite_genre = String(urlParams.favorite_genre).toLowerCase();
-      console.log('  🔗 Using favorite_genre from URL:', traits.favorite_genre);
     } else if (profile.favorite_genre) {
       traits.favorite_genre = String(profile.favorite_genre).toLowerCase();
     }
@@ -102,19 +99,15 @@ export async function setProfileTraits(profile = {}, user = {}) {
     // Use instance method .set() to set all traits at once
     // Instance-based approach (v1.0.9+)
     if (typeof sdk.set !== 'function') {
-      console.error('❌ set() method not available on SDK instance');
-      console.log('   Available methods:', Object.keys(sdk));
+      logger.error('SDK set() method not available');
       return;
     }
 
     await sdk.set(traits);
-    console.log('  ✓ All traits set via instance.set():', traits);
-
-    console.log('✅ Personalize traits set successfully:', traits);
+    logger.success('Profile traits applied');
 
   } catch (err) {
-    console.error('❌ Error setting Personalize traits:', err);
-    console.error('   Error details:', err.message);
+    logger.error('Failed to set profile traits:', err.message);
   }
 }
 
@@ -138,7 +131,6 @@ export function getPersonalizeHeaders() {
                        sessionStorage.getItem('cineverse_selected_profile');
     
     if (!profileData) {
-      console.log('ℹ️ No profile selected - returning default headers');
       return {};
     }
 
@@ -171,11 +163,10 @@ export function getPersonalizeHeaders() {
       headers['X-CS-Personalize-Variants'] = JSON.stringify(variantAliases);
     }
 
-    console.log('🔖 Generated personalize headers:', headers);
     return headers;
 
   } catch (err) {
-    console.warn('⚠️ Error creating personalize headers:', err);
+    logger.warn('Failed to create personalize headers:', err.message);
     return {};
   }
 }
@@ -192,7 +183,7 @@ export async function clearPersonalizeTraits() {
   }
 
   try {
-    console.log('🧹 Clearing Personalize traits');
+    logger.info('Clearing personalize traits...');
 
     // Reset traits to guest defaults using instance method
     await window.csPersonalize.set({
@@ -206,9 +197,9 @@ export async function clearPersonalizeTraits() {
       username: null
     });
 
-    console.log('✅ Personalize traits reset to defaults');
+    logger.success('Personalize traits reset');
   } catch (err) {
-    console.warn('⚠️ Error clearing Personalize traits:', err);
+    logger.warn('Failed to clear personalize traits:', err.message);
   }
 }
 
@@ -241,7 +232,7 @@ export function getCurrentTraits() {
       profile_name: profile.profile_name || 'guest'
     };
   } catch (err) {
-    console.warn('Error getting current traits:', err);
+    logger.warn('Failed to get current traits:', err.message);
     return {};
   }
 }
@@ -266,7 +257,7 @@ export function getVariantAliases() {
 
     return [];
   } catch (err) {
-    console.warn('Error getting variant aliases:', err);
+    logger.warn('Failed to get variant aliases:', err.message);
     return [];
   }
 }

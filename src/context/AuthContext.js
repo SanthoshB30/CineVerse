@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { signUpUser, signInUser, updateUserProfiles as updateProfilesAPI } from '../api/auth';
 import { setProfileTraits, clearPersonalizeTraits, updateUrlWithPersonalizationParams } from '../personalize/personalizeHelpers';
+import logger from '../utils/logger';
 
 const AuthContext = createContext(null);
 
@@ -112,7 +113,7 @@ export const AuthProvider = ({ children }) => {
         return result;
       }
     } catch (error) {
-      console.error('Signup error:', error);
+      logger.error('Signup failed:', error.message);
       return { success: false, error: error.message || 'Signup failed' };
     }
   };
@@ -132,7 +133,7 @@ export const AuthProvider = ({ children }) => {
         return result;
       }
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login failed:', error.message);
       return { success: false, error: error.message || 'Login failed' };
     }
   };
@@ -165,7 +166,7 @@ export const AuthProvider = ({ children }) => {
         }
       }
     } catch (error) {
-      console.error('Error updating profiles:', error);
+      logger.error('Profile update failed:', error.message);
       updateProfilesLocal(profiles);
     }
   };

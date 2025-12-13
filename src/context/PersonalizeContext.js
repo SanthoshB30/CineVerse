@@ -6,6 +6,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import Personalize from '@contentstack/personalize-edge-sdk';
 import { getPersonalizationParamsFromUrl } from '../personalize/urlHelpers';
+import logger from '../utils/logger';
 
 const PersonalizeContext = createContext(null);
 
@@ -26,23 +27,24 @@ async function getPersonalizeInstance() {
     const projectUid = process.env.REACT_APP_CONTENTSTACK_PERSONALIZE_PROJECT_UID;
     
     if (!projectUid) {
-      console.error('❌ REACT_APP_CONTENTSTACK_PERSONALIZE_PROJECT_UID not set');
+      logger.error('Personalize Project UID not configured');
       return null;
     }
 
-    console.log('🎯 Initializing Personalize SDK in Context...');
-    console.log('   Project UID:', projectUid);
+    logger.group('Personalize SDK Initialization');
+    logger.info(`Project UID: ${projectUid}`);
 
     try {
       // Initialize and store instance
       sdkInstance = await Personalize.init(projectUid);
       
-      console.log('✅ Personalize SDK initialized via Context');
-      console.log('   Available methods:', Object.keys(sdkInstance).filter(k => typeof sdkInstance[k] === 'function'));
+      logger.success('Personalize SDK initialized');
+      logger.groupEnd();
       
       return sdkInstance;
     } catch (error) {
-      console.error('❌ Failed to initialize Personalize SDK:', error);
+      logger.error('Personalize SDK initialization failed:', error.message);
+      logger.groupEnd();
       return null;
     }
   }
@@ -70,12 +72,12 @@ export function PersonalizeProvider({ children }) {
           // Initialize with URL parameters if present
           const urlParams = getPersonalizationParamsFromUrl();
           if (Object.keys(urlParams).length > 0) {
-            console.log('🔗 Initializing Personalize with URL parameters:', urlParams);
+            logger.info('Applying URL parameters to Personalize');
             try {
               await instance.set(urlParams);
-              console.log('✅ URL parameters applied to Personalize SDK');
+              logger.success('URL parameters applied');
             } catch (error) {
-              console.warn('⚠️ Failed to apply URL parameters:', error);
+              logger.warn('Failed to apply URL parameters:', error.message);
             }
           }
         }

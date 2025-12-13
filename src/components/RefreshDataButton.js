@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { refreshDataStore } from '../services/dataService';
+import logger from '../utils/logger';
 
 /**
  * RefreshDataButton Component
@@ -16,13 +17,13 @@ const RefreshDataButton = ({ onRefreshComplete }) => {
     setMessage('');
 
     try {
-      console.log('🔄 Manually refreshing data...');
+      logger.info('Manual data refresh initiated...');
       
       const result = await refreshDataStore();
 
       if (result.success) {
-        setMessage(`✅ Refreshed! Loaded ${result.stats?.reviews || 0} reviews`);
-        console.log('✅ Data refreshed successfully:', result.stats);
+        setMessage(`Refreshed! Loaded ${result.stats?.reviews || 0} reviews`);
+        logger.success('Data refresh completed');
         
         // Dispatch custom event to notify components
         window.dispatchEvent(new CustomEvent('dataRefreshed', { 
@@ -37,12 +38,12 @@ const RefreshDataButton = ({ onRefreshComplete }) => {
         // Clear message after 3 seconds
         setTimeout(() => setMessage(''), 3000);
       } else {
-        setMessage('❌ Failed to refresh data');
-        console.error('Failed to refresh:', result.message);
+        setMessage('Failed to refresh data');
+        logger.error('Refresh failed:', result.message);
       }
     } catch (error) {
-      setMessage('❌ Error refreshing data');
-      console.error('Error refreshing data:', error);
+      setMessage('Error refreshing data');
+      logger.error('Refresh error:', error.message);
     } finally {
       setIsRefreshing(false);
     }
@@ -63,7 +64,7 @@ const RefreshDataButton = ({ onRefreshComplete }) => {
           </>
         ) : (
           <>
-            <span>🔄</span>
+            <span>↻</span>
             Refresh Data
           </>
         )}
