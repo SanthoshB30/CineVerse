@@ -2,11 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getAllGenres } from '../api/contentstack';
-
-const AVATAR_OPTIONS = [
-  '😀', '😎', '🤓', '😊', '🥳', '🤩',
-  '🐶', '🐱', '🐼', '🦁', '🐯', '🐸'
-];
+import AvatarGallery from '../components/AvatarGallery';
+import ProfileAvatar from '../components/ProfileAvatar';
+import { DEFAULT_AVATAR } from '../data/avatars';
 
 const ManageProfilesPage = () => {
   const [profiles, setProfiles] = useState([]);
@@ -14,7 +12,7 @@ const ManageProfilesPage = () => {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
-    avatar: AVATAR_OPTIONS[0],
+    avatar: DEFAULT_AVATAR.id,
     isKids: false,
     preferredLanguage: 'english',
     favoriteGenre: ''
@@ -44,7 +42,7 @@ const ManageProfilesPage = () => {
   const resetForm = () => {
     setFormData({
       name: '',
-      avatar: AVATAR_OPTIONS[0],
+      avatar: DEFAULT_AVATAR.id,
       isKids: false,
       preferredLanguage: 'english',
       favoriteGenre: ''
@@ -188,9 +186,13 @@ const ManageProfilesPage = () => {
             <div key={profile._metadata?.uid || index} className="manage-profile-card">
               <div className="profile-card-header">
                 <div className="profile-display">
-                  <div className={`profile-avatar-large ${profile.is_kid ? 'kids-profile' : ''}`}>
-                    {profile.avatar}
-                  </div>
+                  <ProfileAvatar
+                    avatarId={profile.avatar}
+                    size="xlarge"
+                    variant="round"
+                    showGlow={true}
+                    className={profile.is_kid ? 'kids-profile' : ''}
+                  />
                   <div className="profile-details">
                     <h3 className="profile-card-name">{profile.profile_name}</h3>
                     {profile.is_kid && <span className="kids-badge">👶 Kids Profile</span>}
@@ -261,18 +263,11 @@ const ManageProfilesPage = () => {
               </div>
 
               <div className="form-group">
-                <label>Select Avatar</label>
-                <div className="avatar-gallery">
-                  {AVATAR_OPTIONS.map((avatar) => (
-                    <button
-                      key={avatar}
-                      className={`avatar-choice ${formData.avatar === avatar ? 'selected' : ''}`}
-                      onClick={() => setFormData({ ...formData, avatar })}
-                    >
-                      {avatar}
-                    </button>
-                  ))}
-                </div>
+                <AvatarGallery
+                  selectedAvatarId={formData.avatar}
+                  onSelectAvatar={(avatarId) => setFormData({ ...formData, avatar: avatarId })}
+                  variant="round"
+                />
               </div>
 
               <div className="form-group">

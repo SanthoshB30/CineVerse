@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { getAppSettings } from '../services/dataService';
+import logger from '../utils/logger';
 
 /**
  * ThemeInitializer Component
@@ -15,32 +16,29 @@ const ThemeInitializer = () => {
         const settings = getAppSettings();
         
         if (settings && settings.theme_colors) {
-          console.log('🎨 Applying theme colors from Contentstack...');
+          logger.info('Applying theme configuration...');
           
           // Apply primary color if available
           if (settings.theme_colors.primary_color) {
             document.body.style.setProperty('--primary-color', settings.theme_colors.primary_color);
-            console.log(`   Primary color: ${settings.theme_colors.primary_color}`);
           }
           
           // Apply accent color if available
           if (settings.theme_colors.accent_color) {
             document.body.style.setProperty('--accent-color', settings.theme_colors.accent_color);
-            console.log(`   Accent color: ${settings.theme_colors.accent_color}`);
           }
           
           // Store background image URL globally for use in login/signup pages
           if (settings.background_image && settings.background_image.url) {
             window.__CINEVERSE_BG_IMAGE__ = settings.background_image.url;
-            console.log(`   Background image: ${settings.background_image.url}`);
           }
           
-          console.log('✅ Theme colors applied successfully');
+          logger.success('Theme configuration applied');
         } else {
-          console.log('⚠️  No theme colors found in app settings, using defaults');
+          logger.info('No custom theme found, using defaults');
         }
       } catch (error) {
-        console.error('❌ Error initializing theme:', error);
+        logger.error('Theme initialization failed:', error.message);
       }
     };
 

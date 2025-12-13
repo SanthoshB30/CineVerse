@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import LogoHeader from '../components/LogoHeader';
+import logger from '../utils/logger';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -56,7 +57,7 @@ const LoginPage = () => {
         setPassword('');
       }
     } catch (err) {
-      console.error('Login exception:', err);
+      logger.error('Login failed:', err.message);
       setError(err.message || 'An error occurred during login');
       setPassword('');
     } finally {

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { initializeData } from '../api/contentstack';
+import logger from '../utils/logger';
 
 /**
  * DataInitializer Component
@@ -34,7 +35,7 @@ const DataInitializer = ({ children }) => {
         setIsLoading(false);
       }
     } catch (err) {
-      console.error('Error initializing data:', err);
+      logger.error('Data initialization failed:', err.message);
       setError('Failed to connect to Contentstack. Please check your credentials.');
       setIsLoading(false);
     }

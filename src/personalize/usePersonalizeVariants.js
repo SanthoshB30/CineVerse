@@ -11,6 +11,7 @@
 
 import { useState, useEffect } from 'react';
 import { usePersonalize } from '../context/PersonalizeContext';
+import logger from '../utils/logger';
 
 export function usePersonalizeVariants() {
   const sdk = usePersonalize();
@@ -24,16 +25,16 @@ export function usePersonalizeVariants() {
     }
 
     try {
-      console.log('🎭 Getting active variants...');
-      
       // Get variant aliases (array of strings)
       const variantAliases = sdk.getVariantAliases();
       
-      console.log('🎨 Active variant aliases:', variantAliases);
+      if (variantAliases && variantAliases.length > 0) {
+        logger.info('Active variants:', variantAliases);
+      }
       setVariants(variantAliases || []);
       
     } catch (error) {
-      console.error('❌ Error getting variants:', error);
+      logger.error('Failed to get variants:', error.message);
       setVariants([]);
     } finally {
       setLoading(false);
@@ -57,11 +58,10 @@ export function useTriggerImpression(experienceShortUid) {
 
     const triggerImpression = async () => {
       try {
-        console.log('📊 Triggering impression for:', experienceShortUid);
         await sdk.triggerImpression(experienceShortUid);
-        console.log('✅ Impression triggered');
+        logger.info('Impression triggered:', experienceShortUid);
       } catch (error) {
-        console.error('❌ Error triggering impression:', error);
+        logger.error('Impression trigger failed:', error.message);
       }
     };
 
@@ -81,16 +81,15 @@ export function useTriggerEvent() {
 
   return async (eventKey, eventProperties = {}) => {
     if (!sdk) {
-      console.warn('⚠️ SDK not available, cannot trigger event');
+      logger.warn('SDK not available, event not triggered');
       return;
     }
 
     try {
-      console.log('🎯 Triggering event:', eventKey, eventProperties);
       await sdk.triggerEvent(eventKey, eventProperties);
-      console.log('✅ Event triggered');
+      logger.info('Event triggered:', eventKey);
     } catch (error) {
-      console.error('❌ Error triggering event:', error);
+      logger.error('Event trigger failed:', error.message);
     }
   };
 }

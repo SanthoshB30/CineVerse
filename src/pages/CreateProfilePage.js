@@ -4,17 +4,16 @@ import { useAuth } from '../context/AuthContext';
 import { getUpcomingMovies, getImageUrl, getAllGenres } from '../api/contentstack';
 import { trackProfileCreation } from '../services/analytics';
 import { setProfileTraits } from '../personalize/personalizeHelpers';
-
-const AVATAR_OPTIONS = [
-  '😀', '😎', '🤓', '😊', '🥳', '🤩',
-  '🐶', '🐱', '🐼', '🦁', '🐯', '🐸'
-];
+import AvatarGallery from '../components/AvatarGallery';
+import ProfileAvatar from '../components/ProfileAvatar';
+import { DEFAULT_AVATAR } from '../data/avatars';
+import logger from '../utils/logger';
 
 const CreateProfilePage = () => {
   const [profiles, setProfiles] = useState([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newProfileName, setNewProfileName] = useState('');
-  const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0]);
+  const [selectedAvatar, setSelectedAvatar] = useState(DEFAULT_AVATAR.id);
   const [isKid, setIsKid] = useState(false);
   const [preferredLanguage, setPreferredLanguage] = useState('english');
   const [favoriteGenre, setFavoriteGenre] = useState('');
@@ -121,14 +120,14 @@ const CreateProfilePage = () => {
       setProfileTraits(newProfile, user);
       
       setNewProfileName('');
-      setSelectedAvatar(AVATAR_OPTIONS[0]);
+      setSelectedAvatar(DEFAULT_AVATAR.id);
       setIsKid(false);
       setPreferredLanguage('english');
       setFavoriteGenre('');
       setShowCreateForm(false);
       setError('');
     } catch (error) {
-      console.error('Failed to save profile:', error);
+      logger.error('Profile save failed:', error.message);
       setError('Failed to save profile. Please try again.');
     }
   };
@@ -177,7 +176,12 @@ const CreateProfilePage = () => {
                   className="profile-avatar-button"
                   onClick={() => handleSelectProfile(profile)}
                 >
-                  <div className="profile-avatar">{profile.avatar}</div>
+                  <ProfileAvatar
+                    avatarId={profile.avatar}
+                    size="large"
+                    variant="round"
+                    showGlow={false}
+                  />
                   <span className="profile-name">
                     {profile.profile_name}
                     {profile.is_kid && <span style={{ fontSize: '0.9rem', marginLeft: '0.3rem' }}>👶</span>}
@@ -211,18 +215,11 @@ const CreateProfilePage = () => {
               <h3>Create New Profile</h3>
               
               <div className="avatar-selector">
-                <p>Select Avatar:</p>
-                <div className="avatar-grid">
-                  {AVATAR_OPTIONS.map((avatar) => (
-                    <button
-                      key={avatar}
-                      className={`avatar-option ${selectedAvatar === avatar ? 'selected' : ''}`}
-                      onClick={() => setSelectedAvatar(avatar)}
-                    >
-                      {avatar}
-                    </button>
-                  ))}
-                </div>
+                <AvatarGallery
+                  selectedAvatarId={selectedAvatar}
+                  onSelectAvatar={setSelectedAvatar}
+                  variant="round"
+                />
               </div>
 
               <input

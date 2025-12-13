@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import LogoHeader from '../components/LogoHeader';
+import logger from '../utils/logger';
 
 const SignUpPage = () => {
   const [username, setUsername] = useState('');
@@ -65,7 +66,7 @@ const SignUpPage = () => {
         setError(result.error || 'Sign up failed');
       }
     } catch (err) {
-      console.error('Signup error:', err);
+      logger.error('Signup failed:', err.message);
       setError(err.message || 'An error occurred during sign up');
     } finally {
       setLoading(false);
