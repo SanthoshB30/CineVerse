@@ -2,9 +2,11 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { PersonalizeProvider } from './context/PersonalizeContext';
+import { WatchlistProvider } from './context/WatchlistContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navigation from './components/Navigation';
 import ChatBot from './components/ChatBot';
+import Toast from './components/Toast';
 import DataInitializer from './components/DataInitializer';
 import ThemeInitializer from './components/ThemeInitializer';
 import LoginPage from './pages/LoginPage';
@@ -23,6 +25,7 @@ import BrowseGenresPage from './pages/BrowseGenresPage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import AllDirectorsPage from './pages/AllDirectorsPage';
 import AllActorsPage from './pages/AllActorsPage';
+import WatchlistPage from './pages/WatchlistPage';
 import './styles/App.css';
 
 function App() {
@@ -30,8 +33,10 @@ function App() {
     <Router>
       <PersonalizeProvider>
         <AuthProvider>
+          <WatchlistProvider>
           <DataInitializer>
             <ThemeInitializer />
+            <Toast />
             <div className="App">
             <Routes>
               <Route path="/" element={<Navigate to="/login" replace />} />
@@ -214,6 +219,21 @@ function App() {
                 </ProtectedRoute>
               } />
               
+              <Route path="/watchlist" element={
+                <ProtectedRoute>
+                  <>
+                    <Navigation />
+                    <main className="main-content">
+                      <WatchlistPage />
+                    </main>
+                    <ChatBot />
+                    <footer className="footer">
+                      <p>&copy; 2025 CineVerse. Your Universe of Cinema.</p>
+                    </footer>
+                  </>
+                </ProtectedRoute>
+              } />
+              
               <Route path="*" element={
                 <div className="error-page">
                   <h1>404 - Page Not Found</h1>
@@ -224,6 +244,7 @@ function App() {
             </Routes>
           </div>
           </DataInitializer>
+          </WatchlistProvider>
         </AuthProvider>
       </PersonalizeProvider>
     </Router>

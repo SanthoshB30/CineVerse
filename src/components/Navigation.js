@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useWatchlist } from '../context/WatchlistContext';
 import SearchBar from './SearchBar';
 import UserMenu from './UserMenu';
 
@@ -9,7 +10,8 @@ const Navigation = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  useAuth(); // Keep auth context active
+  const { watchlistCount } = useWatchlist();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -75,6 +77,18 @@ const Navigation = () => {
             aria-current={isActiveLink('/actors') ? 'page' : undefined}
           >
             Actors
+          </Link>
+          <Link 
+            to="/watchlist" 
+            className={`nav-link nav-link-watchlist ${isActiveLink('/watchlist') ? 'active' : ''}`}
+            role="menuitem"
+            aria-current={isActiveLink('/watchlist') ? 'page' : undefined}
+          >
+            <span className="watchlist-nav-icon">🎬</span>
+            Watchlist
+            {watchlistCount > 0 && (
+              <span className="watchlist-badge">{watchlistCount}</span>
+            )}
           </Link>
         </div>
 

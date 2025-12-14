@@ -4,6 +4,7 @@ import { getMovieBySlug, getImageUrl, getMoviesByGenre } from '../api/contentsta
 import ReviewSection from '../components/ReviewSection';
 import MovieCard from '../components/MovieCard';
 import { trackMovieView, trackWatchedMovie } from '../services/analytics';
+import { useWatchlist } from '../context/WatchlistContext';
 
 const MovieDetailPage = () => {
   const { slug } = useParams();
@@ -11,7 +12,7 @@ const MovieDetailPage = () => {
   const [similarMovies, setSimilarMovies] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scrollY, setScrollY] = useState(0);
-  const [showStickyBar, setShowStickyBar] = useState(false);
+  const { isInWatchlist, toggleWatchlist } = useWatchlist();
 
   useEffect(() => {
     loadMovie();
@@ -21,7 +22,6 @@ const MovieDetailPage = () => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
       setScrollY(currentScrollY);
-      setShowStickyBar(currentScrollY > 600);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -124,24 +124,33 @@ const MovieDetailPage = () => {
                       <span>Trailer</span>
                     </a>
                   )}
-                  <button className="action-btn secondary" aria-label="Add to watchlist">
-                    <span className="icon">+</span>
-                  </button>
-                  <button className="action-btn secondary" aria-label="Share">
-                    <span className="icon">↗</span>
+                  <button 
+                    className={`action-btn secondary ${isInWatchlist(movie.uid) ? 'active' : ''}`}
+                    onClick={() => toggleWatchlist(movie)}
+                    aria-label={isInWatchlist(movie.uid) ? 'Remove from watchlist' : 'Add to watchlist'}
+                  >
+                    <span className="icon">{isInWatchlist(movie.uid) ? '✓' : '+'}</span>
+                    <span>{isInWatchlist(movie.uid) ? 'In Watchlist' : 'Watchlist'}</span>
                   </button>
                 </div>
                 
-                {/* Rating Badge */}
-                {movie.rating && (
-                  <div className="rating-badge-3d">
-                    <span className="rating-score">{movie.rating.toFixed(1)}</span>
-                    <span className="rating-max">/5</span>
-                    <div className="rating-stars">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <span key={i} className={i < Math.round(movie.rating) ? 'star-filled' : 'star-empty'}>
-                          ★
-                        </span>
+                {/* Watch Now - Streaming Links (below poster) */}
+                {movie.streaming_links && movie.streaming_links.length > 0 && (
+                  <div className="poster-streaming-section">
+                    <h4>Watch Now On</h4>
+                    <div className="poster-streaming-platforms">
+                      {movie.streaming_links.map((link, index) => (
+                        <a
+                          key={index}
+                          href={link.watch_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="poster-streaming-button"
+                          onClick={() => handleWatchClick(link.platform)}
+                        >
+                          <span className="platform-icon">▶</span>
+                          <span className="platform-name">{link.platform}</span>
+                        </a>
                       ))}
                     </div>
                   </div>
@@ -234,6 +243,7 @@ const MovieDetailPage = () => {
                   </div>
                 )}
               </div>
+              
             </div>
           </div>
         </div>
@@ -246,52 +256,6 @@ const MovieDetailPage = () => {
           </div>
         )}
       </section>
-
-      {/* Sticky Action Bar (appears on scroll) */}
-      <div className={`sticky-action-bar ${showStickyBar ? 'visible' : ''}`}>
-        <div className="sticky-bar-content">
-          <div className="movie-mini-info">
-            <img src={posterUrl} alt="" loading="lazy" />
-            <span className="movie-mini-title">{movie.title}</span>
-          </div>
-          <div className="sticky-bar-actions">
-            {movie.trailer_url && (
-              <a 
-                href={movie.trailer_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn btn-primary btn-sm"
-              >
-                ▶ Watch Trailer
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Streaming Links Section */}
-      {movie.streaming_links && movie.streaming_links.length > 0 && (
-        <div className="streaming-section-wrapper">
-          <div className="streaming-section">
-            <h3>Watch Now On</h3>
-            <div className="streaming-platforms">
-              {movie.streaming_links.map((link, index) => (
-                <a
-                  key={index}
-                  href={link.watch_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="streaming-button"
-                  onClick={() => handleWatchClick(link.platform)}
-                >
-                  <span className="platform-icon">▶</span>
-                  <span className="platform-name">{link.platform}</span>
-                </a>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Reviews Section */}
       <div className="movie-reviews-wrapper">
