@@ -1,9 +1,26 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import CryptoJS from 'crypto-js';
 import { signUpUser, signInUser, updateUserProfiles as updateProfilesAPI } from '../api/auth';
 import { setProfileTraits, clearPersonalizeTraits, updateUrlWithPersonalizationParams } from '../personalize/personalizeHelpers';
 import logger from '../utils/logger';
 
 const AuthContext = createContext(null);
+
+/**
+ * Hash password with SHA-256 and salt for secure storage
+ * Note: For production, consider using a backend with bcrypt
+ */
+const hashPassword = (password, salt) => {
+  const saltedPassword = salt + password;
+  return CryptoJS.SHA256(saltedPassword).toString(CryptoJS.enc.Hex);
+};
+
+/**
+ * Generate a random salt for password hashing
+ */
+const generateSalt = () => {
+  return CryptoJS.lib.WordArray.random(16).toString(CryptoJS.enc.Hex);
+};
 
 const isContentstackConfigured = () => {
   return !!(
@@ -49,17 +66,32 @@ export const AuthProvider = ({ children }) => {
       return { success: false, error: 'Email already registered' };
     }
 
-    const userData = {
+    // Generate salt and hash password - NEVER store plaintext password
+    const salt = generateSalt();
+    const passwordHash = hashPassword(password, salt);
+
+    // Store user with hashed password (not plaintext)
+    const storedUserData = {
       uid: Date.now().toString(),
       username,
       email,
-      password,
+      passwordHash,  // Store hash, not password
+      salt,          // Store salt for verification
       profiles: [],
       created_on: new Date().toISOString()
     };
 
-    existingUsers[email] = userData;
+    existingUsers[email] = storedUserData;
     localStorage.setItem('cineverse_users', JSON.stringify(existingUsers));
+
+    // User object for state/session (without sensitive data)
+    const userData = {
+      uid: storedUserData.uid,
+      username,
+      email,
+      profiles: [],
+      created_on: storedUserData.created_on
+    };
 
     setUser(userData);
     sessionStorage.setItem('cineverse_user', JSON.stringify(userData));
@@ -69,11 +101,26 @@ export const AuthProvider = ({ children }) => {
 
   const loginLocal = (email, password, rememberMe = false) => {
     const existingUsers = JSON.parse(localStorage.getItem('cineverse_users') || '{}');
-    const userData = existingUsers[email];
+    const storedUser = existingUsers[email];
     
-    if (!userData || userData.password !== password) {
+    if (!storedUser) {
       return { success: false, error: 'Invalid email or password' };
     }
+
+    // Verify password by comparing hashes
+    const passwordHash = hashPassword(password, storedUser.salt);
+    if (passwordHash !== storedUser.passwordHash) {
+      return { success: false, error: 'Invalid email or password' };
+    }
+
+    // Create user object for state/session (without sensitive data)
+    const userData = {
+      uid: storedUser.uid,
+      username: storedUser.username,
+      email: storedUser.email,
+      profiles: storedUser.profiles || [],
+      created_on: storedUser.created_on
+    };
 
     setUser(userData);
     const storage = rememberMe ? localStorage : sessionStorage;
@@ -85,15 +132,20 @@ export const AuthProvider = ({ children }) => {
   const updateProfilesLocal = (profiles) => {
     if (!user) return;
 
+    // Update user state (without sensitive data)
     const updatedUser = { ...user, profiles };
     setUser(updatedUser);
 
     const storage = localStorage.getItem('cineverse_user') ? localStorage : sessionStorage;
     storage.setItem('cineverse_user', JSON.stringify(updatedUser));
 
+    // Update stored user (preserving passwordHash and salt)
     const existingUsers = JSON.parse(localStorage.getItem('cineverse_users') || '{}');
     if (existingUsers[user.email]) {
-      existingUsers[user.email] = updatedUser;
+      existingUsers[user.email] = {
+        ...existingUsers[user.email],  // Keep passwordHash, salt
+        profiles                        // Update profiles only
+      };
       localStorage.setItem('cineverse_users', JSON.stringify(existingUsers));
     }
   };
@@ -157,9 +209,13 @@ export const AuthProvider = ({ children }) => {
       }
 
       if (!useContentstack) {
+        // Update stored user (preserving passwordHash and salt)
         const existingUsers = JSON.parse(localStorage.getItem('cineverse_users') || '{}');
         if (existingUsers[user.email]) {
-          existingUsers[user.email] = updatedUser;
+          existingUsers[user.email] = {
+            ...existingUsers[user.email],  // Keep passwordHash, salt
+            profiles                        // Update profiles only
+          };
           localStorage.setItem('cineverse_users', JSON.stringify(existingUsers));
         }
       }

@@ -1,15 +1,26 @@
 import CryptoJS from 'crypto-js';
 import logger from '../utils/logger';
 
-// Use environment variable or fallback (in production, use env variable only)
-const SECRET_KEY = process.env.REACT_APP_ENCRYPTION_SECRET || 'cineverse-secret-key-2025';
+// Environment variables - REQUIRED (no fallbacks for security)
+const SECRET_KEY = process.env.REACT_APP_ENCRYPTION_SECRET;
+const API_KEY = process.env.REACT_APP_CONTENTSTACK_API_KEY;
+const DELIVERY_TOKEN = process.env.REACT_APP_CONTENTSTACK_DELIVERY_TOKEN;
+const MANAGEMENT_TOKEN = process.env.REACT_APP_CONTENTSTACK_MANAGEMENT_TOKEN;
+const ENVIRONMENT = process.env.REACT_APP_CONTENTSTACK_ENVIRONMENT || 'development';
+
+// Validate required environment variables
+if (!SECRET_KEY) {
+  console.error('SECURITY ERROR: REACT_APP_ENCRYPTION_SECRET is not configured');
+}
+if (!API_KEY) {
+  console.error('SECURITY ERROR: REACT_APP_CONTENTSTACK_API_KEY is not configured');
+}
+if (!DELIVERY_TOKEN) {
+  console.error('SECURITY ERROR: REACT_APP_CONTENTSTACK_DELIVERY_TOKEN is not configured');
+}
 
 const BASE_URL = 'https://cdn.contentstack.io/v3';
 const MANAGEMENT_URL = 'https://api.contentstack.io/v3';
-const API_KEY = process.env.REACT_APP_CONTENTSTACK_API_KEY || 'blt3c4b3e4f90b5f8a3';
-const DELIVERY_TOKEN = process.env.REACT_APP_CONTENTSTACK_DELIVERY_TOKEN || 'cs5fad7fd567df567ff99cd99c';
-const MANAGEMENT_TOKEN = process.env.REACT_APP_CONTENTSTACK_MANAGEMENT_TOKEN;
-const ENVIRONMENT = process.env.REACT_APP_CONTENTSTACK_ENVIRONMENT || 'development';
 
 // Log Contentstack configuration on module load
 logger.group('Auth Configuration');
