@@ -30,7 +30,7 @@ const AllActorsPage = () => {
     <div className="all-actors-page">
       <div className="page-header">
         <h1>All Actors</h1>
-        <p>{actors.length} {actors.length === 1 ? 'actor' : 'actors'} in our collection</p>
+        <p>Discover the stars of our movie collection</p>
       </div>
 
       {actors.length > 0 ? (

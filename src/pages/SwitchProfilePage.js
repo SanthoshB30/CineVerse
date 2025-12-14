@@ -35,8 +35,10 @@ const SwitchProfilePage = () => {
     selectProfile(profile);
     
     // Navigate with preferred_language in URL for Personalization
+    // Use window.location.href to force a full page reload
     const preferredLanguage = profile.preferred_language || 'english';
-    navigate(`/home?preferred_language=${preferredLanguage}`);
+    const isKids = profile.is_kid ? '&isKids=true' : '';
+    window.location.href = `/home?preferred_language=${preferredLanguage}${isKids}`;
   };
 
   if (!user?.profiles || user.profiles.length === 0) {

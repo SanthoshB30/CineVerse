@@ -51,7 +51,7 @@ const WatchlistPage = () => {
           </div>
           <h2>No movies in your watchlist yet</h2>
           <p>Browse our collection and add movies you'd like to watch later.</p>
-          <Link to="/home" className="btn btn-primary">
+          <Link to="/movies" className="btn btn-primary">
             Browse Movies
           </Link>
         </div>

@@ -30,7 +30,7 @@ const AllDirectorsPage = () => {
     <div className="all-directors-page">
       <div className="page-header">
         <h1>All Directors</h1>
-        <p>{directors.length} directors in our collection</p>
+        <p>Explore our collection of talented filmmakers</p>
       </div>
 
       {directors.length > 0 ? (

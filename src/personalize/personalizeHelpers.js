@@ -1,10 +1,17 @@
-import { getPersonalizeSdk } from '../context/PersonalizeContext';
+/**
+ * Personalize Helpers
+ * 
+ * Utility functions for Contentstack Personalize integration.
+ * Uses the personalizeService for all SDK operations.
+ */
+
 import { 
   getUrlParams, 
   getPreferredLanguageFromUrl, 
   getPersonalizationParamsFromUrl,
   updateUrlWithPersonalizationParams 
 } from './urlHelpers';
+import personalizeService from '../services/personalizeService';
 import logger from '../utils/logger';
 
 export { 
@@ -14,141 +21,186 @@ export {
   updateUrlWithPersonalizationParams 
 };
 
+/**
+ * Set User Attributes - triggers audience evaluation
+ */
 export async function setProfileTraits(profile = {}, user = {}) {
   if (typeof window === 'undefined') {
     logger.warn('Not in browser environment');
     return;
   }
 
-  const sdk = getPersonalizeSdk();
-
-  if (!sdk) {
-    logger.error('Personalize SDK not available. Verify PersonalizeProvider configuration.');
-    return;
-  }
-
   try {
-    logger.info('Setting profile traits:', profile.profile_name || 'Unknown');
+    logger.info('Setting profile traits for:', profile.profile_name || 'Unknown');
 
-    const traits = {
-      is_kid: !!profile.is_kid,
-      profile_type: profile.is_kid ? 'kid' : 'adult',
-      profile_name: profile.profile_name || 'guest'
-    };
+    // Build attributes object for Personalize
+    const attributes = {};
 
+    // Set profile type for kids mode
+    if (profile.is_kid) {
+      attributes.profile_type = 'kids';
+    } else {
+      attributes.profile_type = 'adult';
+    }
+
+    // Set preferred language if available
     const urlParams = getPersonalizationParamsFromUrl();
     
     if (urlParams.preferred_language) {
-      traits.preferred_language = String(urlParams.preferred_language).toLowerCase();
+      attributes.preferred_language = String(urlParams.preferred_language).toLowerCase();
     } else if (profile.preferred_language) {
-      traits.preferred_language = String(profile.preferred_language).toLowerCase();
+      attributes.preferred_language = String(profile.preferred_language).toLowerCase();
     }
 
+    // Set favorite genre if available
     if (urlParams.favorite_genre) {
-      traits.favorite_genre = String(urlParams.favorite_genre).toLowerCase();
+      attributes.favorite_genre = String(urlParams.favorite_genre).toLowerCase();
     } else if (profile.favorite_genre) {
-      traits.favorite_genre = String(profile.favorite_genre).toLowerCase();
+      attributes.favorite_genre = String(profile.favorite_genre).toLowerCase();
     }
 
-    if (user?.uid) {
-      traits.user_uid = String(user.uid);
-    }
-    if (user?.email) {
-      traits.email = String(user.email);
-    }
-    if (user?.username) {
-      traits.username = String(user.username);
-    }
-
-    if (typeof sdk.set !== 'function') {
-      logger.error('SDK set() method not available');
-      return;
-    }
-
-    await sdk.set(traits);
+    // Use personalizeService
+    const result = await personalizeService.setUserAttributes(attributes);
+    
     logger.success('Profile traits applied');
+    logger.data('Attributes set', attributes);
+    
+    return result;
 
   } catch (err) {
     logger.error('Failed to set profile traits:', err.message);
   }
 }
 
-export function getPersonalizeHeaders() {
-  if (typeof window === 'undefined' || !window.csPersonalize) {
-    return {};
-  }
-
+/**
+ * Set preferred language for personalization
+ */
+export async function setPreferredLanguage(language) {
   try {
-    const profileData = localStorage.getItem('cineverse_selected_profile') || 
-                       sessionStorage.getItem('cineverse_selected_profile');
+    logger.info('Setting preferred language:', language);
     
-    if (!profileData) {
-      return {};
+    const result = await personalizeService.setUserLanguage(language);
+    
+    if (result) {
+      logger.success(`Language set to ${language}`);
     }
-
-    const profile = JSON.parse(profileData);
-
-    const traits = {
-      is_kid: !!profile.is_kid,
-      profile_type: profile.is_kid ? 'kid' : 'adult',
+    
+    return {
+      variantParam: personalizeService.getVariantParam(),
+      aliases: personalizeService.getRawVariantAliases()
     };
-
-    if (profile.preferred_language) {
-      traits.preferred_language = String(profile.preferred_language).toLowerCase();
-    }
-
-    if (profile.favorite_genre) {
-      traits.favorite_genre = String(profile.favorite_genre).toLowerCase();
-    }
-
-    const variantAliases = window.__PERSONALIZE_VARIANTS__ || [];
-
-    const headers = {
-      'X-CS-Personalize-Enabled': 'true',
-      'X-CS-Personalize-Traits': JSON.stringify(traits)
-    };
-
-    if (variantAliases && variantAliases.length > 0) {
-      headers['X-CS-Personalize-Variants'] = JSON.stringify(variantAliases);
-    }
-
-    return headers;
-
+    
   } catch (err) {
-    logger.warn('Failed to create personalize headers:', err.message);
-    return {};
+    logger.error('Failed to set preferred language:', err.message);
   }
 }
 
-export async function clearPersonalizeTraits() {
-  if (typeof window === 'undefined' || !window.csPersonalize) {
-    return;
+/**
+ * Set profile type (kids/adult) for personalization
+ */
+export async function setProfileType(profileType) {
+  try {
+    logger.info('Setting profile type:', profileType);
+    
+    const result = await personalizeService.setUserProfileType(profileType);
+    
+    if (result) {
+      logger.success(`Profile type set to ${profileType}`);
+    }
+    
+    return {
+      variantParam: personalizeService.getVariantParam(),
+      aliases: personalizeService.getRawVariantAliases()
+    };
+    
+  } catch (err) {
+    logger.error('Failed to set profile type:', err.message);
   }
+}
 
+/**
+ * Set favorite genre for personalization
+ */
+export async function setFavoriteGenre(genre) {
+  try {
+    logger.info('Setting favorite genre:', genre);
+    
+    const result = await personalizeService.setUserFavoriteGenre(genre);
+    
+    if (result) {
+      logger.success(`Favorite genre set to ${genre}`);
+    }
+    
+    return {
+      variantParam: personalizeService.getVariantParam(),
+      aliases: personalizeService.getRawVariantAliases()
+    };
+    
+  } catch (err) {
+    logger.error('Failed to set favorite genre:', err.message);
+  }
+}
+
+/**
+ * Clear/reset user attributes
+ */
+export async function clearPersonalizeTraits() {
   try {
     logger.info('Clearing personalize traits...');
-    await window.csPersonalize.set({
-      is_kid: false,
-      profile_type: 'adult',
-      preferred_language: 'english',
-      favorite_genre: null,
-      profile_name: 'guest',
-      user_uid: null,
-      email: null,
-      username: null
-    });
-
-    logger.success('Personalize traits reset');
+    
+    personalizeService.clearPersonalizationData();
+    
+    logger.success('Personalize traits cleared');
+    
   } catch (err) {
     logger.warn('Failed to clear personalize traits:', err.message);
   }
 }
 
-export function getCurrentTraits() {
-  if (typeof window === 'undefined' || !window.csPersonalize) {
-    return {};
-  }
+/**
+ * Get current variant param
+ */
+export function getCurrentVariantParam() {
+  return personalizeService.getVariantParam();
+}
 
+/**
+ * Get variant aliases object from SDK
+ */
+export function getVariantAliases() {
+  return personalizeService.getRawVariantAliases();
+}
+
+/**
+ * Get variant aliases as comma-separated string for .variants() API
+ */
+export function getVariantAliasesString() {
+  return personalizeService.getVariantAlias();
+}
+
+/**
+ * Convert variant param to aliases array
+ */
+export function getVariantAliasesFromParam() {
+  const sdk = personalizeService.getSDK();
+  if (!sdk) return [];
+
+  try {
+    const variantParam = sdk.getVariantParam();
+    if (!variantParam) {
+      return [];
+    }
+    return sdk.variantParamToVariantAliases(variantParam);
+  } catch (err) {
+    logger.warn('Failed to convert variant param:', err.message);
+    return [];
+  }
+}
+
+/**
+ * Get current traits from stored profile (for UI display)
+ */
+export function getCurrentTraits() {
   try {
     const profileData = localStorage.getItem('cineverse_selected_profile') || 
                        sessionStorage.getItem('cineverse_selected_profile');
@@ -159,8 +211,8 @@ export function getCurrentTraits() {
 
     return {
       is_kid: !!profile.is_kid,
-      profile_type: profile.is_kid ? 'kid' : 'adult',
-      preferred_language: profile.preferred_language || 'english',
+      profile_type: profile.is_kid ? 'kids' : 'adult',
+      preferred_language: profile.preferred_language || null,
       favorite_genre: profile.favorite_genre || null,
       profile_name: profile.profile_name || 'guest'
     };
@@ -170,20 +222,30 @@ export function getCurrentTraits() {
   }
 }
 
-export function getVariantAliases() {
-  if (typeof window === 'undefined' || !window.csPersonalize) {
-    return [];
-  }
-
-  try {
-    if (typeof window.csPersonalize.getVariantAliases === 'function') {
-      return window.csPersonalize.getVariantAliases() || [];
-    }
-
-    return [];
-  } catch (err) {
-    logger.warn('Failed to get variant aliases:', err.message);
-    return [];
-  }
+/**
+ * Get x-cs-variant-uid header value for direct API calls
+ */
+export function getVariantHeader() {
+  return getVariantAliasesString();
 }
 
+/**
+ * Creates headers for API requests with variant info
+ */
+export function getPersonalizeHeaders() {
+  try {
+    const variantAliases = getVariantAliasesString();
+
+    const headers = {};
+
+    if (variantAliases) {
+      headers['x-cs-variant-uid'] = variantAliases;
+    }
+
+    return headers;
+
+  } catch (err) {
+    logger.warn('Failed to create personalize headers:', err.message);
+    return {};
+  }
+}

@@ -26,6 +26,7 @@ import SearchResultsPage from './pages/SearchResultsPage';
 import AllDirectorsPage from './pages/AllDirectorsPage';
 import AllActorsPage from './pages/AllActorsPage';
 import WatchlistPage from './pages/WatchlistPage';
+import MoviesPage from './pages/MoviesPage';
 import './styles/App.css';
 
 function App() {
@@ -90,6 +91,21 @@ function App() {
                     <Navigation />
                     <main className="main-content">
                       <HomePage />
+                    </main>
+                    <ChatBot />
+                    <footer className="footer">
+                      <p>&copy; 2025 CineVerse. Your Universe of Cinema.</p>
+                    </footer>
+                  </>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/movies" element={
+                <ProtectedRoute>
+                  <>
+                    <Navigation />
+                    <main className="main-content">
+                      <MoviesPage />
                     </main>
                     <ChatBot />
                     <footer className="footer">
