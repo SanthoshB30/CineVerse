@@ -1,24 +1,7 @@
-/**
- * ============================================================================
- * DATA SERVICE - Contentstack Integration
- * ============================================================================
- * 
- * This service fetches and caches data from Contentstack.
- * All data is fetched once on initialization and cached for performance.
- * 
- * ============================================================================
- */
-
 import * as Contentstack from 'contentstack';
 import logger from '../utils/logger';
 
-/**
- * ============================================================================
- * CONTENTSTACK CONFIGURATION
- * ============================================================================
- */
-
-// Initialize Contentstack SDK
+// Contentstack Configuration
 const Stack = Contentstack.Stack({
   api_key: process.env.REACT_APP_CONTENTSTACK_API_KEY,
   delivery_token: process.env.REACT_APP_CONTENTSTACK_DELIVERY_TOKEN,
@@ -26,10 +9,6 @@ const Stack = Contentstack.Stack({
   region: process.env.REACT_APP_CONTENTSTACK_REGION || 'us'
 });
 
-/**
- * Get variant aliases from Contentstack Personalize SDK
- * These aliases are used to fetch personalized content variants
- */
 const getVariantAliases = () => {
   try {
     // Check if Personalize SDK is available and has variant aliases
@@ -54,17 +33,10 @@ const getVariantAliases = () => {
   }
 };
 
-/**
- * Add personalization to a Contentstack query using Variant Aliases
- * This is the proper way to use Contentstack Personalize SDK
- */
 const addPersonalizationToQuery = (query) => {
   try {
     const variantAliases = getVariantAliases();
-    
     if (variantAliases && variantAliases.length > 0) {
-      // Add variant aliases to the query
-      // This tells Contentstack to return personalized variants
       query.variants(variantAliases);
       logger.success('Personalization variants applied:', variantAliases);
     } else {
@@ -73,7 +45,6 @@ const addPersonalizationToQuery = (query) => {
   } catch (error) {
     logger.error('Failed to add personalization to query:', error);
   }
-  
   return query;
 };
 
@@ -96,12 +67,6 @@ const validateConfig = () => {
   return true;
 };
 
-/**
- * ============================================================================
- * DATA STORE CLASS
- * ============================================================================
- */
-
 class DataStore {
   constructor() {
     this.movies = [];
@@ -114,28 +79,19 @@ class DataStore {
     this.initializationPromise = null;
   }
 
-  /**
-   * Initialize the data store by fetching from Contentstack
-   */
   async initialize() {
-    // If already initialized, return
     if (this.isInitialized) {
       return { success: true, message: 'Already initialized' };
     }
 
-    // If initialization is in progress, return the existing promise
     if (this.initializationPromise) {
       return this.initializationPromise;
     }
 
-    // Start initialization
     this.initializationPromise = this._loadFromContentstack();
     return this.initializationPromise;
   }
 
-  /**
-   * Load all data from Contentstack
-   */
   async _loadFromContentstack() {
     try {
       logger.group('Contentstack Data Loading');
@@ -214,9 +170,6 @@ class DataStore {
     }
   }
 
-  /**
-   * Fetch App Settings from Contentstack
-   */
   async _fetchAppSettings() {
     try {
       logger.info('Fetching app settings...');
@@ -242,9 +195,6 @@ class DataStore {
     }
   }
 
-  /**
-   * Fetch Directors from Contentstack
-   */
   async _fetchDirectors() {
     try {
       logger.info('Fetching directors...');
@@ -273,9 +223,6 @@ class DataStore {
     }
   }
 
-  /**
-   * Fetch Genres from Contentstack
-   */
   async _fetchGenres() {
     try {
       logger.info('Fetching genres...');
@@ -303,9 +250,6 @@ class DataStore {
     }
   }
 
-  /**
-   * Fetch Actors from Contentstack
-   */
   async _fetchActors() {
     try {
       logger.info('Fetching actors...');
@@ -326,21 +270,15 @@ class DataStore {
       logger.info(`Actors: ${entries.length} entries found`);
       
       return entries.map(entry => {
-        // Extract movies from filmography group (which is an array of groups)
         let movies = [];
         
         if (entry.filmography && Array.isArray(entry.filmography)) {
-          // Each filmography item is a group with a movies array
-          entry.filmography.forEach((filmItem, index) => {
-            // movies is an array inside each filmography group item
+          entry.filmography.forEach((filmItem) => {
             if (filmItem.movies && Array.isArray(filmItem.movies)) {
               filmItem.movies.forEach(movie => {
-                // Check if movie is fully populated (has title) or just a reference (only uid)
                 if (!movie.title) {
                   return;
                 }
-                
-                // Movie is fully populated, add it
                 movies.push({
                   uid: movie.uid,
                   title: movie.title,
@@ -379,15 +317,10 @@ class DataStore {
     }
   }
 
-  /**
-   * Fetch Movies from Contentstack
-   */
   async _fetchMovies() {
     try {
       logger.info('Fetching movies...');
       let Query = Stack.ContentType('movie').Query();
-      
-      // Add personalization - This is the key part for personalized content!
       Query = addPersonalizationToQuery(Query);
       
       const result = await Query
@@ -421,9 +354,6 @@ class DataStore {
     }
   }
 
-  /**
-   * Fetch Reviews from Contentstack
-   */
   async _fetchReviews() {
     try {
       logger.info('Fetching reviews...');
@@ -453,9 +383,6 @@ class DataStore {
     }
   }
 
-  /**
-   * Refresh/reload data from Contentstack
-   */
   async refresh() {
     logger.info('Refreshing data from Contentstack...');
     this.isInitialized = false;
@@ -463,16 +390,10 @@ class DataStore {
     return await this.initialize();
   }
 
-  /**
-   * Check if data store is ready
-   */
   isReady() {
     return this.isInitialized;
   }
 
-  /**
-   * Get initialization stats
-   */
   getStats() {
     return {
       isInitialized: this.isInitialized,
@@ -485,67 +406,35 @@ class DataStore {
     };
   }
 
-  /**
-   * Get app settings
-   */
   getAppSettings() {
     return this.appSettings;
   }
 }
 
-// Create singleton instance
 const dataStore = new DataStore();
 
-/**
- * ============================================================================
- * INITIALIZATION FUNCTIONS
- * ============================================================================
- */
-
-/**
- * Initialize the data store (call this on app startup)
- */
+// Initialization Functions
 export const initializeDataStore = async () => {
   return await dataStore.initialize();
 };
 
-/**
- * Refresh the data store
- */
 export const refreshDataStore = async () => {
   return await dataStore.refresh();
 };
 
-/**
- * Check if data store is ready
- */
 export const isDataStoreReady = () => {
   return dataStore.isReady();
 };
 
-/**
- * Get data store stats
- */
 export const getDataStoreStats = () => {
   return dataStore.getStats();
 };
 
-/**
- * Get app settings
- */
 export const getAppSettings = () => {
   return dataStore.getAppSettings();
 };
 
-/**
- * ============================================================================
- * MOVIE QUERIES
- * ============================================================================
- */
-
-/**
- * Get all movies
- */
+// Movie Queries
 export const getAllMovies = () => {
   if (!dataStore.isInitialized) {
     logger.warn('Data store not initialized');
@@ -554,57 +443,35 @@ export const getAllMovies = () => {
   return [...dataStore.movies];
 };
 
-/**
- * Get featured movies
- */
 export const getFeaturedMovies = () => {
   if (!dataStore.isInitialized) return [];
   return dataStore.movies.filter(movie => movie.featured === true);
 };
 
-/**
- * Get upcoming movies (for profile page background slideshow)
- */
 export const getUpcomingMovies = () => {
   if (!dataStore.isInitialized) return [];
   return dataStore.movies.filter(movie => movie.upcoming === true);
 };
 
-/**
- * Get movie by slug
- */
 export const getMovieBySlug = (slug) => {
   if (!dataStore.isInitialized) return null;
   return dataStore.movies.find(movie => movie.slug === slug) || null;
 };
 
-/**
- * Get movie by UID
- */
 export const getMovieByUid = (uid) => {
   if (!dataStore.isInitialized) return null;
   return dataStore.movies.find(movie => movie.uid === uid) || null;
 };
 
-/**
- * Get movies by genre slug
- */
 export const getMoviesByGenre = (genreSlug) => {
   if (!dataStore.isInitialized) return [];
-  
-  // Find the genre
   const genre = dataStore.genres.find(g => g.slug === genreSlug);
   if (!genre) return [];
-
-  // Filter movies that include this genre
   return dataStore.movies.filter(movie => 
     movie.genre?.some(g => g.uid === genre.uid)
   );
 };
 
-/**
- * Get movies by genre name (for chatbot)
- */
 export const getMoviesByGenreName = (genreName) => {
   if (!dataStore.isInitialized) return [];
   
@@ -615,26 +482,15 @@ export const getMoviesByGenreName = (genreName) => {
   );
 };
 
-/**
- * Get movies by director slug
- */
 export const getMoviesByDirector = (directorSlug) => {
   if (!dataStore.isInitialized) return [];
-  
-  // Find the director
   const director = dataStore.directors.find(d => d.slug === directorSlug);
   if (!director) return [];
-
-  // Filter movies that include this director
   return dataStore.movies.filter(movie => 
     movie.director?.some(d => d.uid === director.uid)
   );
 };
 
-/**
- * Enhanced search movies with metadata and context
- * Searches primarily in title, then expands to other fields for longer queries
- */
 export const searchMovies = (searchTerm) => {
   if (!dataStore.isInitialized) return [];
   
@@ -715,144 +571,75 @@ export const searchMovies = (searchTerm) => {
   });
 };
 
-/**
- * Search movies for chatbot (limited results)
- */
 export const searchMovieForChatbot = (searchTerm) => {
   const results = searchMovies(searchTerm);
   return results.slice(0, 3);
 };
 
-/**
- * ============================================================================
- * GENRE QUERIES
- * ============================================================================
- */
-
-/**
- * Get all genres
- */
+// Genre Queries
 export const getAllGenres = () => {
   if (!dataStore.isInitialized) return [];
   return [...dataStore.genres];
 };
 
-/**
- * Get genre by slug
- */
 export const getGenreBySlug = (slug) => {
   if (!dataStore.isInitialized) return null;
   return dataStore.genres.find(g => g.slug === slug) || null;
 };
 
-/**
- * Get genre by UID
- */
 export const getGenreByUid = (uid) => {
   if (!dataStore.isInitialized) return null;
   return dataStore.genres.find(g => g.uid === uid) || null;
 };
 
-/**
- * ============================================================================
- * DIRECTOR QUERIES
- * ============================================================================
- */
-
-/**
- * Get all directors
- */
+// Director Queries
 export const getAllDirectors = () => {
   if (!dataStore.isInitialized) return [];
-  
-  // Add movies_directed to each director
   return dataStore.directors.map(director => ({
     ...director,
     movies_directed: getMoviesByDirector(director.slug)
   }));
 };
 
-/**
- * Get director by slug
- */
 export const getDirectorBySlug = (slug) => {
   if (!dataStore.isInitialized) return null;
-  
   const director = dataStore.directors.find(d => d.slug === slug);
   if (!director) return null;
-
-  // Add movies_directed
   return {
     ...director,
     movies_directed: getMoviesByDirector(slug)
   };
 };
 
-/**
- * Get director by UID
- */
 export const getDirectorByUid = (uid) => {
   if (!dataStore.isInitialized) return null;
   return dataStore.directors.find(d => d.uid === uid) || null;
 };
 
-/**
- * ============================================================================
- * ACTOR QUERIES
- * ============================================================================
- */
-
-/**
- * Get all actors
- */
+// Actor Queries
 export const getAllActors = () => {
   if (!dataStore.isInitialized) return [];
-  
-  // Add movies_acted_in to each actor (if needed in future)
-  return dataStore.actors.map(actor => ({
-    ...actor
-  }));
+  return dataStore.actors.map(actor => ({ ...actor }));
 };
 
-/**
- * Get actor by slug
- */
 export const getActorBySlug = (slug) => {
   if (!dataStore.isInitialized) return null;
-  
   const actor = dataStore.actors.find(a => a.slug === slug);
   if (!actor) return null;
-
-  return {
-    ...actor
-  };
+  return { ...actor };
 };
 
-/**
- * Get actor by UID
- */
 export const getActorByUid = (uid) => {
   if (!dataStore.isInitialized) return null;
   return dataStore.actors.find(a => a.uid === uid) || null;
 };
 
-/**
- * ============================================================================
- * REVIEW QUERIES
- * ============================================================================
- */
-
-/**
- * Get all reviews
- */
+// Review Queries
 export const getAllReviews = () => {
   if (!dataStore.isInitialized) return [];
   return [...dataStore.reviews];
 };
 
-/**
- * Get reviews by movie UID
- */
 export const getReviewsByMovie = (movieUid) => {
   if (!dataStore.isInitialized) return [];
   return dataStore.reviews.filter(review => 
@@ -860,35 +647,19 @@ export const getReviewsByMovie = (movieUid) => {
   );
 };
 
-/**
- * Get reviews by movie slug
- */
 export const getReviewsByMovieSlug = (movieSlug) => {
   if (!dataStore.isInitialized) return [];
-  
   const movie = getMovieBySlug(movieSlug);
   if (!movie) return [];
-  
   return getReviewsByMovie(movie.uid);
 };
 
-/**
- * ============================================================================
- * UTILITY FUNCTIONS
- * ============================================================================
- */
-
-/**
- * Get image URL with fallback
- */
+// Utility Functions
 export const getImageUrl = (imageObject) => {
   if (!imageObject) return null;
   return imageObject.url || null;
 };
 
-/**
- * Format date
- */
 export const formatDate = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -899,20 +670,11 @@ export const formatDate = (dateString) => {
   });
 };
 
-/**
- * Calculate average rating from reviews
- */
 export const calculateAverageRating = (reviews) => {
   if (!reviews || reviews.length === 0) return 0;
   const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
   return (sum / reviews.length).toFixed(1);
 };
-
-/**
- * ============================================================================
- * EXPORTS
- * ============================================================================
- */
 
 export default {
   // Initialization

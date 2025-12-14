@@ -11,17 +11,14 @@ const Navigation = () => {
   const location = useLocation();
   const { user } = useAuth();
 
-  // Handle scroll for glassmorphism effect
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
-
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu when route changes
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location]);
@@ -31,7 +28,6 @@ const Navigation = () => {
     setIsMenuOpen(false);
   };
 
-  // Check if link is active
   const isActiveLink = (path) => {
     if (path === '/home') {
       return location.pathname === '/home' || location.pathname === '/';
@@ -84,8 +80,6 @@ const Navigation = () => {
 
         <div className="nav-right">
           <SearchBar onSearch={handleSearch} />
-          
-          {/* User Menu with Hamburger */}
           <UserMenu />
           
           <button 

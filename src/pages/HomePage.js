@@ -5,6 +5,7 @@ import { getAllMovies } from '../services/dataService';
 import MovieCard from '../components/MovieCard';
 import { trackHomePage } from '../services/analytics';
 import { usePersonalizeVariants } from '../personalize/usePersonalizeVariants';
+import { useAuth } from '../context/AuthContext';
 import logger from '../utils/logger';
 
 const HomePage = () => {
@@ -15,33 +16,30 @@ const HomePage = () => {
   const [scrollY, setScrollY] = useState(0);
   const [showFullDescription, setShowFullDescription] = useState(false);
   
-  // Get personalization variants (array of variant aliases)
+  const { selectedProfile } = useAuth();
   const { variants, loading: variantLoading } = usePersonalizeVariants();
 
   useEffect(() => {
     loadData();
-    // Track home page visit
     trackHomePage();
   }, []);
 
-  // Reload data when variants change
   useEffect(() => {
-    if (variants.length > 0 && !variantLoading) {
-      logger.info('Variants updated, refreshing content');
+    if (!variantLoading) {
+      logger.info('Profile or variants updated, refreshing content');
       loadData();
     }
-  }, [variants]);
+  }, [variants, selectedProfile]);
 
   useEffect(() => {
     if (trendingMovies.length > 0) {
       const interval = setInterval(() => {
         setCurrentTrendingIndex((prev) => (prev + 1) % trendingMovies.length);
-      }, 7000); // Increased to 7 seconds for better viewing
+      }, 7000);
       return () => clearInterval(interval);
     }
   }, [trendingMovies]);
 
-  // Parallax scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setScrollY(window.scrollY);
@@ -50,35 +48,45 @@ const HomePage = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const kidFriendlyGenres = ['animation', 'family', 'kids', 'children', 'comedy', 'adventure', 'fantasy'];
+  
   const loadData = async () => {
     setLoading(true);
     try {
       const moviesData = await getAllMovies();
-      
-      // Apply personalization based on variant aliases
       let personalizedMovies = moviesData;
+      const isKidsProfile = selectedProfile?.is_kid || variants.some(v => v === 'kids_content' || v.includes('kids'));
       
-      if (variants && variants.length > 0) {
+      if (isKidsProfile) {
+        const matureGenres = ['horror', 'thriller', 'crime', 'war'];
+        
+        personalizedMovies = moviesData.filter(movie => {
+          const movieGenres = movie.genre?.map(g => (g.name || g.title || '').toLowerCase()) || [];
+          const hasMatureContent = movieGenres.some(genre => 
+            matureGenres.some(mature => genre.includes(mature))
+          );
+          
+          if (hasMatureContent) {
+            return false;
+          }
+          
+          const hasKidFriendlyGenre = movieGenres.some(genre =>
+            kidFriendlyGenres.some(friendly => genre.includes(friendly))
+          );
+          
+          return hasKidFriendlyGenre || movieGenres.length === 0;
+        });
+        
+        logger.success(`Kids filter applied: ${personalizedMovies.length} kid-friendly movies`);
+      } else if (variants && variants.length > 0) {
         logger.info('Applying personalization:', variants);
         
-        // Check for kids variant
-        if (variants.some(v => v === 'kids_content' || v.includes('kids'))) {
-          personalizedMovies = moviesData.filter(movie => 
-            movie.age_rating === 'U' || movie.age_rating === 'PG' || !movie.age_rating
-          );
-          logger.success(`Kids filter applied: ${personalizedMovies.length} movies`);
-        }
-        
-        // Check for Tamil variant
-        else if (variants.some(v => v === 'tamil_movies' || v.includes('tamil'))) {
+        if (variants.some(v => v === 'tamil_movies' || v.includes('tamil'))) {
           const tamilMovies = moviesData.filter(m => m.language === 'tamil' || m.language === 'Tamil');
           const otherMovies = moviesData.filter(m => m.language !== 'tamil' && m.language !== 'Tamil');
           personalizedMovies = [...tamilMovies, ...otherMovies];
           logger.success(`Tamil prioritization applied: ${tamilMovies.length} movies`);
-        }
-        
-        // Check for Action variant
-        else if (variants.some(v => v === 'action_genre' || v.includes('action'))) {
+        } else if (variants.some(v => v === 'action_genre' || v.includes('action'))) {
           const actionMovies = moviesData.filter(m => 
             m.genre?.some(g => g.name?.toLowerCase() === 'action')
           );
@@ -92,7 +100,6 @@ const HomePage = () => {
       
       setAllMovies(personalizedMovies);
       
-      // Get trending movies (highest rated or featured)
       const trending = personalizedMovies
         .filter(movie => movie.rating >= 4.0)
         .sort((a, b) => b.rating - a.rating)
@@ -136,11 +143,20 @@ const HomePage = () => {
   const truncatedDescription = description.substring(0, 200);
   const fullDescription = description.substring(0, 400);
 
+  // Check if this is a kids profile
+  const isKidsMode = selectedProfile?.is_kid || variants.some(v => v.includes('kids'));
+
   return (
     <div className="home-page-new">
-      {/* Enhanced Hero Banner with Parallax */}
+      {isKidsMode && (
+        <div className="kids-mode-banner">
+          <span className="kids-mode-icon">👶</span>
+          <span className="kids-mode-text">Kids Mode Active</span>
+          <span className="kids-mode-subtitle">Only showing age-appropriate content</span>
+        </div>
+      )}
+
       <div className="hero-banner-enhanced">
-        {/* Parallax Background */}
         <div 
           className="hero-parallax-bg"
           style={{ 
@@ -149,22 +165,18 @@ const HomePage = () => {
           }}
         />
         
-        {/* Multiple gradient overlays for depth */}
         <div className="hero-gradient-overlay" />
         <div className="hero-vignette" />
         
         {currentTrending && (
           <div className="hero-content-enhanced">
-            {/* Premium Featured Badge */}
             <div className="hero-badge">
               <span className="badge-icon">👑</span>
               <span>Featured This Week</span>
             </div>
             
-            {/* Animated Title */}
             <h1 className="hero-title-animated">{currentTrending.title}</h1>
             
-            {/* Enhanced Meta with Icons */}
             <div className="hero-meta-enhanced">
               {currentTrending.release_year && (
                 <span className="meta-pill">📅 {currentTrending.release_year}</span>
@@ -180,7 +192,6 @@ const HomePage = () => {
               )}
             </div>
             
-            {/* Expandable Description */}
             {description && (
               <div className="hero-description-expandable">
                 <p>
@@ -198,7 +209,6 @@ const HomePage = () => {
               </div>
             )}
             
-            {/* Enhanced CTA Group */}
             <div className="hero-cta-group">
               <Link to={`/movie/${currentTrending.slug}`} className="btn btn-primary btn-lg hero-cta">
                 <span className="btn-icon">▶</span>
@@ -213,7 +223,6 @@ const HomePage = () => {
           </div>
         )}
 
-        {/* Enhanced Carousel Controls with Thumbnails */}
         <div className="hero-carousel-controls">
           <button 
             className="carousel-nav-btn carousel-prev" 
@@ -248,7 +257,6 @@ const HomePage = () => {
           </button>
         </div>
 
-        {/* Scroll Indicator */}
         {scrollY < 50 && (
           <div className="scroll-indicator">
             <span>Scroll to explore</span>
@@ -257,20 +265,18 @@ const HomePage = () => {
         )}
       </div>
 
-      {/* Main Content - Movies Only */}
       <div className="home-content-full">
-        {/* All Movies Section */}
         <section className="home-movies-only-section">
           <div className="section-header">
             <h2 className="section-title">
-              {variants.some(v => v.includes('kids')) ? '👶 Kids Movies' :
+              {selectedProfile?.is_kid || variants.some(v => v.includes('kids')) ? '👶 Kids Movies' :
                variants.some(v => v.includes('tamil')) ? '🎬 Tamil Movies' :
                variants.some(v => v.includes('action')) ? '💥 Action Movies' :
                'All Movies'}
             </h2>
             <p className="section-subtitle">
               {allMovies.length} movies available
-              {variants.length > 0 && <span style={{ marginLeft: '10px', color: '#6C5CE7' }}>• Personalized for you</span>}
+              {(selectedProfile?.is_kid || variants.length > 0) && <span style={{ marginLeft: '10px', color: '#6C5CE7' }}>• Personalized for you</span>}
             </p>
           </div>
 

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { getAllGenres, getImageUrl } from '../api/contentstack';
 
-// Fallback emoji icons if no image is provided
 const GENRE_ICONS = {
   'horror': '👻',
   'comedy': '😂',

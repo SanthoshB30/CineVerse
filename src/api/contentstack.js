@@ -1,27 +1,3 @@
-/**
- * ============================================================================
- * Contentstack API Integration Layer
- * All data fetching functions for the Movie Review Platform
- * ============================================================================
- * 
- * This file now uses the DataService which fetches all data once and caches it.
- * All functions query the cached data instead of making individual API calls.
- * 
- * To use REAL Contentstack data:
- * 1. Ensure dataService.js has the correct Contentstack configuration
- * 2. Make sure your .env file has valid Contentstack credentials:
- *    - REACT_APP_CONTENTSTACK_API_KEY
- *    - REACT_APP_CONTENTSTACK_DELIVERY_TOKEN
- *    - REACT_APP_CONTENTSTACK_ENVIRONMENT
- *    - REACT_APP_CONTENTSTACK_REGION (optional, defaults to 'us')
- * 
- * To use MOCK data for demo:
- * 1. Keep the mock data implementation below
- * 2. Comment out the dataService imports
- * 
- * ============================================================================
- */
-
 // Import DataService for real Contentstack data
 import * as DataService from '../services/dataService';
 
@@ -101,7 +77,6 @@ const MOCK_DIRECTORS = [
   }
 ];
 
-// Mock Genres
 const MOCK_GENRES = [
   {
     uid: 'genre_1',
@@ -175,7 +150,6 @@ const MOCK_GENRES = [
   }
 ];
 
-// Mock Movies
 const MOCK_MOVIES = [
   {
     uid: 'movie_1',
@@ -381,7 +355,6 @@ const MOCK_MOVIES = [
   }
 ];
 
-// Mock Reviews
 const MOCK_REVIEWS = [
   {
     uid: 'review_1',
@@ -421,13 +394,7 @@ const MOCK_REVIEWS = [
   }
 ];
 
-/**
- * ============================================================================
- * MOVIE API FUNCTIONS
- * ============================================================================
- */
-
-// Fetch all movies
+// Movie Functions
 export const getAllMovies = async () => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -436,7 +403,6 @@ export const getAllMovies = async () => {
   return DataService.getAllMovies();
 };
 
-// Fetch featured movies (for homepage carousel)
 export const getFeaturedMovies = async () => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -445,17 +411,14 @@ export const getFeaturedMovies = async () => {
   return DataService.getFeaturedMovies();
 };
 
-// Fetch upcoming movies (for profile page background)
 export const getUpcomingMovies = async () => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
-    // Return featured movies as upcoming in mock mode
     return MOCK_MOVIES.filter(movie => movie.featured).slice(0, 5);
   }
   return DataService.getUpcomingMovies();
 };
 
-// Fetch a single movie by slug
 export const getMovieBySlug = async (slug) => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -464,13 +427,11 @@ export const getMovieBySlug = async (slug) => {
   return DataService.getMovieBySlug(slug);
 };
 
-// Fetch movies by genre
 export const getMoviesByGenre = async (genreSlug) => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
     const genre = MOCK_GENRES.find(g => g.slug === genreSlug);
     if (!genre) return [];
-    
     return MOCK_MOVIES.filter(movie => 
       movie.genre?.some(g => g.uid === genre.uid)
     );
@@ -478,7 +439,6 @@ export const getMoviesByGenre = async (genreSlug) => {
   return DataService.getMoviesByGenre(genreSlug);
 };
 
-// Search movies by title
 export const searchMovies = async (searchTerm) => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -491,13 +451,7 @@ export const searchMovies = async (searchTerm) => {
   return DataService.searchMovies(searchTerm);
 };
 
-/**
- * ============================================================================
- * DIRECTOR API FUNCTIONS
- * ============================================================================
- */
-
-// Fetch all directors
+// Director Functions
 export const getAllDirectors = async () => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -511,7 +465,6 @@ export const getAllDirectors = async () => {
   return DataService.getAllDirectors();
 };
 
-// Fetch a single director by slug
 export const getDirectorBySlug = async (slug) => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -528,17 +481,10 @@ export const getDirectorBySlug = async (slug) => {
   return DataService.getDirectorBySlug(slug);
 };
 
-/**
- * ============================================================================
- * ACTOR API FUNCTIONS
- * ============================================================================
- */
-
-// Fetch all actors
+// Actor Functions
 export const getAllActors = async () => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
-    // Mock actors data
     return [
       { uid: 'actor_1', name: 'Tom Hanks', slug: 'tom-hanks', birth_year: 1956 },
       { uid: 'actor_2', name: 'Meryl Streep', slug: 'meryl-streep', birth_year: 1949 },
@@ -553,7 +499,6 @@ export const getAllActors = async () => {
   return DataService.getAllActors();
 };
 
-// Fetch a single actor by slug
 export const getActorBySlug = async (slug) => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -563,13 +508,7 @@ export const getActorBySlug = async (slug) => {
   return DataService.getActorBySlug(slug);
 };
 
-/**
- * ============================================================================
- * GENRE API FUNCTIONS
- * ============================================================================
- */
-
-// Fetch all genres
+// Genre Functions
 export const getAllGenres = async () => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -578,7 +517,6 @@ export const getAllGenres = async () => {
   return DataService.getAllGenres();
 };
 
-// Fetch a single genre by slug
 export const getGenreBySlug = async (slug) => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -587,13 +525,7 @@ export const getGenreBySlug = async (slug) => {
   return DataService.getGenreBySlug(slug);
 };
 
-/**
- * ============================================================================
- * REVIEW API FUNCTIONS
- * ============================================================================
- */
-
-// Fetch reviews for a specific movie
+// Review Functions
 export const getReviewsByMovie = async (movieUid) => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -602,7 +534,6 @@ export const getReviewsByMovie = async (movieUid) => {
   return DataService.getReviewsByMovie(movieUid);
 };
 
-// Fetch all reviews
 export const getAllReviews = async () => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -611,22 +542,15 @@ export const getAllReviews = async () => {
   return DataService.getAllReviews();
 };
 
-/**
- * ============================================================================
- * CHATBOT API FUNCTIONS
- * ============================================================================
- */
-
-// Fetch chatbot prompts/responses
+// Chatbot Functions
 export const getChatbotPrompts = async () => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
     return [];
   }
-  return []; // No specific prompts needed
+  return [];
 };
 
-// Search for movie information for chatbot
 export const searchMovieForChatbot = async (searchTerm) => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -639,7 +563,6 @@ export const searchMovieForChatbot = async (searchTerm) => {
   return DataService.searchMovieForChatbot(searchTerm);
 };
 
-// Get movies by genre name for chatbot recommendations
 export const getMoviesByGenreName = async (genreName) => {
   if (USE_MOCK_DATA) {
     await new Promise(resolve => setTimeout(resolve, 300));
@@ -652,19 +575,12 @@ export const getMoviesByGenreName = async (genreName) => {
   return DataService.getMoviesByGenreName(genreName);
 };
 
-/**
- * ============================================================================
- * UTILITY FUNCTIONS
- * ============================================================================
- */
-
-// Get image URL with fallback
+// Utility Functions
 export const getImageUrl = (imageObject) => {
   if (!imageObject) return null;
   return imageObject.url || null;
 };
 
-// Format date
 export const formatDate = (dateString) => {
   if (!dateString) return '';
   const date = new Date(dateString);
@@ -675,7 +591,6 @@ export const formatDate = (dateString) => {
   });
 };
 
-// Calculate average rating from reviews
 export const calculateAverageRating = (reviews) => {
   if (!reviews || reviews.length === 0) return 0;
   const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);

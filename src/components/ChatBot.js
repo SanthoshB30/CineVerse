@@ -11,25 +11,23 @@ const ChatBot = () => {
   const [messages, setMessages] = useState([
     {
       type: 'bot',
-      text: 'Hello! 👋 I can help you discover movies. Try asking me:\n• "Tell me about [movie name]"\n• "Recommend a [genre] movie"\n• "Suggest movies about [topic]" (e.g., space travel)\n• "What genres are available?"',
+      text: 'Welcome to CineVerse Assistant.\n\nHow can I help you today?\n\n• Tell me about [movie name]\n• Recommend a [genre] movie\n• Suggest movies about [topic]\n• What genres are available?',
     }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
+  const lastDiscussedMovieRef = useRef(null);
 
-  // 🔹 Scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // 🔹 Auto-focus when opened
   useEffect(() => {
     if (isOpen) inputRef.current?.focus();
   }, [isOpen]);
 
-  // 🔹 Close on ESC
   useEffect(() => {
     const handleEsc = (e) => {
       if (e.key === 'Escape' && isOpen) setIsOpen(false);
@@ -75,7 +73,6 @@ const ChatBot = () => {
 
     const response = await processMessage(userMessage);
 
-    // 🔹 Simulate bot typing delay
     setTimeout(() => {
       setIsTyping(false);
       setMessages(prev => [
@@ -92,28 +89,62 @@ const ChatBot = () => {
       const genres = await getAllGenres();
       if (genres.length > 0) {
         const genreList = genres.map(g => g.name).join(', ');
-        return `We have the following genres available: ${genreList}. Which genre interests you?`;
+        return `**Available Genres**\n\n${genreList}\n\nSelect a genre to view recommendations.`;
       }
-      return "I'm having trouble fetching genres right now. Please try again later.";
+      return 'Unable to retrieve genres at this time. Please try again later.';
     }
 
     if (lowerMessage.includes('recommend') || lowerMessage.includes('suggest')) {
+      if (lowerMessage.includes('similar')) {
+        const lastMovie = lastDiscussedMovieRef.current;
+        
+        if (lastMovie && lastMovie.genre && lastMovie.genre.length > 0) {
+          const primaryGenre = lastMovie.genre[0].name;
+          const movies = await getMoviesByGenreName(primaryGenre);
+          
+          if (movies.length > 0) {
+            const similarMovies = movies
+              .filter(m => m.title !== lastMovie.title)
+              .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+              .slice(0, 5);
+            
+            if (similarMovies.length > 0) {
+              let response = `**Similar to ${lastMovie.title}**\n\n`;
+              response += `Based on genre: ${primaryGenre}\n\n`;
+              similarMovies.forEach((movie, idx) => {
+                response += `${idx + 1}. **${movie.title}** (${movie.release_year})`;
+                if (movie.rating) response += `\n   Rating: ${movie.rating.toFixed(1)}/5`;
+                if (movie.director?.[0]) response += `\n   Director: ${movie.director[0].name}`;
+                response += '\n\n';
+              });
+              response += '**Next Steps**\nAsk for details on any title above.';
+              return response;
+            }
+          }
+          return `No similar titles found for ${lastMovie.title}.`;
+        }
+        
+        return 'No movie context available.\n\nFirst, ask about a specific movie (e.g., "Tell me about Inception"), then request similar recommendations.';
+      }
+      
       const genres = await getAllGenres();
+
       for (const genre of genres) {
         if (lowerMessage.includes(genre.name.toLowerCase())) {
           const movies = await getMoviesByGenreName(genre.name);
           if (movies.length > 0) {
             const topMovies = movies.sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 3);
-            let response = `Here are some great ${genre.name} movies:\n\n`;
+            let response = `**${genre.name} Recommendations**\n\n`;
             topMovies.forEach((movie, idx) => {
               response += `${idx + 1}. **${movie.title}** (${movie.release_year})`;
-              if (movie.rating) response += ` - ⭐ ${movie.rating.toFixed(1)}`;
-              if (movie.director?.[0]) response += ` - Directed by ${movie.director[0].name}`;
-              response += '\n';
+              if (movie.rating) response += `\n   Rating: ${movie.rating.toFixed(1)}/5`;
+              if (movie.director?.[0]) response += `\n   Director: ${movie.director[0].name}`;
+              response += '\n\n';
             });
+            response += '**Next Steps**\nAsk for details on any title above.';
             return response;
           }
-          return `I couldn't find any ${genre.name} movies at the moment.`;
+          return `No ${genre.name} titles are currently available.`;
         }
       }
 
@@ -122,19 +153,20 @@ const ChatBot = () => {
         const movies = await searchMoviesByTopic(keywords);
         if (movies.length > 0) {
           const topMovies = movies.slice(0, 5);
-          let response = `Here are movies about ${keywords.join(', ')}:\n\n`;
+          let response = `**Results for "${keywords.join(', ')}"**\n\n`;
           topMovies.forEach((movie, idx) => {
             response += `${idx + 1}. **${movie.title}** (${movie.release_year})`;
-            if (movie.rating) response += ` - ⭐ ${movie.rating.toFixed(1)}`;
-            if (movie.director?.[0]) response += ` - Directed by ${movie.director[0].name}`;
-            response += '\n';
+            if (movie.rating) response += `\n   Rating: ${movie.rating.toFixed(1)}/5`;
+            if (movie.director?.[0]) response += `\n   Director: ${movie.director[0].name}`;
+            response += '\n\n';
           });
+          response += '**Next Steps**\nAsk for details on any title above.';
           return response;
         }
-        return `I couldn't find any movies about ${keywords.join(', ')}. Try another topic!`;
+        return `No results found for "${keywords.join(', ')}". Try a different search term.`;
       }
 
-      return "Please specify a genre or topic, e.g., 'Recommend movies about space travel' or 'Suggest a Drama film'.";
+      return 'Please specify a genre or topic.\n\nExamples:\n• Recommend a Drama movie\n• Suggest movies about space exploration';
     }
 
     if (lowerMessage.includes('tell me about') || lowerMessage.includes('what is') || lowerMessage.includes('about')) {
@@ -146,30 +178,38 @@ const ChatBot = () => {
       const movies = await searchMovieForChatbot(searchTerm);
       if (movies.length > 0) {
         const movie = movies[0];
+        lastDiscussedMovieRef.current = movie;
+        
         let response = `**${movie.title}** (${movie.release_year})\n\n`;
-        if (movie.director?.[0]) response += `Directed by: ${movie.director[0].name}\n`;
+        response += '**Overview**\n';
+        response += `${movie.description?.substring(0, 300) || 'No description available.'}${movie.description?.length > 300 ? '...' : ''}\n\n`;
+        response += '**Key Details**\n';
+        if (movie.director?.[0]) response += `Director: ${movie.director[0].name}\n`;
         if (movie.genre && movie.genre.length > 0) response += `Genre: ${movie.genre.map(g => g.name).join(', ')}\n`;
         if (movie.duration) response += `Duration: ${movie.duration}\n`;
-        if (movie.rating) response += `Rating: ⭐ ${movie.rating.toFixed(1)}/5\n`;
-        response += `\n${movie.description?.substring(0, 200)}...`;
+        if (movie.rating) response += `Rating: ${movie.rating.toFixed(1)}/5\n`;
+        response += '\n**Suggested Follow-ups**\n';
+        response += 'Recommend similar movies\n';
+        response += 'View other titles by this director';
+        
         return response;
       }
-      return `I couldn't find a movie matching "${searchTerm}". Try another title!`;
+      return `No results found for "${searchTerm}". Please verify the title and try again.`;
     }
 
     const movies = await searchMovieForChatbot(message);
     if (movies.length > 0) {
-      let response = `I found ${movies.length} movie(s) matching your search:\n\n`;
+      let response = `**Search Results** (${movies.length} found)\n\n`;
       movies.forEach((movie, idx) => {
-        response += `${idx + 1}. ${movie.title} (${movie.release_year})`;
-        if (movie.rating) response += ` - ⭐ ${movie.rating.toFixed(1)}`;
+        response += `${idx + 1}. **${movie.title}** (${movie.release_year})`;
+        if (movie.rating) response += ` - ${movie.rating.toFixed(1)}/5`;
         response += '\n';
       });
-      response += '\nWant to know more about any of these?';
+      response += '\nRequest details on any title for more information.';
       return response;
     }
 
-    return "I'm not sure how to help with that. Try asking about a specific movie, or request recommendations by genre!";
+    return 'I could not process that request.\n\nTry one of the following:\n• Tell me about [movie title]\n• Recommend a [genre] movie\n• What genres are available?';
   };
 
   const handleKeyPress = (e) => {

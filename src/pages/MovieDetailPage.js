@@ -17,7 +17,6 @@ const MovieDetailPage = () => {
     loadMovie();
   }, [slug]);
 
-  // Parallax scroll effect
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
@@ -30,21 +29,17 @@ const MovieDetailPage = () => {
 
   const loadMovie = async () => {
     setLoading(true);
-    window.scrollTo(0, 0); // Scroll to top when loading new movie
+    window.scrollTo(0, 0);
     const movieData = await getMovieBySlug(slug);
     setMovie(movieData);
     
-    // Track movie view
     if (movieData) {
       trackMovieView(movieData.uid, movieData.title, movieData.slug);
     }
     
-    // Load similar movies based on genre
     if (movieData && movieData.genre && movieData.genre.length > 0) {
       const genreSlug = movieData.genre[0].slug;
       const moviesInGenre = await getMoviesByGenre(genreSlug);
-      
-      // Filter out current movie and limit to 6 similar movies
       const similar = moviesInGenre
         .filter(m => m.uid !== movieData.uid)
         .slice(0, 6);
@@ -55,7 +50,6 @@ const MovieDetailPage = () => {
   };
 
   const handleWatchClick = (platform) => {
-    // Track watched event
     if (movie) {
       trackWatchedMovie(movie.uid, movie.title);
     }

@@ -15,7 +15,6 @@ const SignUpPage = () => {
   const navigate = useNavigate();
   const { signup } = useAuth();
 
-  // Load background image from app settings
   useEffect(() => {
     const bgImage = window.__CINEVERSE_BG_IMAGE__;
     if (bgImage) {
@@ -28,21 +27,18 @@ const SignUpPage = () => {
     setError('');
     setLoading(true);
 
-    // Validate inputs
     if (!username.trim() || !email.trim() || !password.trim()) {
       setError('Please fill in all fields');
       setLoading(false);
       return;
     }
 
-    // Validate username
     if (username.length < 3) {
       setError('Username must be at least 3 characters long');
       setLoading(false);
       return;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError('Please enter a valid email address');
@@ -50,7 +46,6 @@ const SignUpPage = () => {
       return;
     }
 
-    // Validate password strength
     if (password.length < 6) {
       setError('Password must be at least 6 characters long');
       setLoading(false);

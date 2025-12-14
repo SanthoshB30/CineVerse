@@ -18,7 +18,6 @@ const SearchResultsPage = () => {
 
   useEffect(() => {
     performSearch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query]);
 
   const performSearch = async () => {
@@ -32,7 +31,6 @@ const SearchResultsPage = () => {
     const movies = await searchMovies(query);
     setResults(movies);
     
-    // Extract search context metadata
     const context = {
       genres: new Set(),
       directors: new Set(),
@@ -46,14 +44,11 @@ const SearchResultsPage = () => {
     });
     
     setSearchContext(context);
-    
-    // Track search query and results with context
     trackSearch(query, movies.length);
     
     setLoading(false);
   };
 
-  // Generate search suggestions based on context
   const getSearchSuggestions = () => {
     const suggestions = [];
     

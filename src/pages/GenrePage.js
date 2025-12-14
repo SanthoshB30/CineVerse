@@ -24,7 +24,6 @@ const GenrePage = () => {
     const genreData = await getGenreBySlug(slug);
     setGenre(genreData);
 
-    // Track genre view
     if (genreData) {
       trackGenreView(genreData.uid, genreData.title, genreData.slug);
     }

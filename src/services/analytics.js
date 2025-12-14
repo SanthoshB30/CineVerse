@@ -1,41 +1,17 @@
-/**
- * Analytics Service
- * 
- * Contentstack Analytics:
- * - Automatically tracks entry views when content is fetched via Delivery API
- * - Only works on deployed domains (not localhost)
- * - View analytics in: Contentstack Dashboard → Analytics
- * 
- * These functions log events to console for development debugging.
- * Once deployed, Contentstack tracks automatically without any code changes.
- */
-
 import logger from '../utils/logger';
 
-/**
- * Track page view
- */
 export const trackPageView = (pageName, additionalData = {}) => {
   logger.info(`Analytics: Page View - ${pageName}`);
 };
 
-/**
- * Track entry view (movie, genre, director, actor)
- */
 export const trackEntryView = (pageName, entryUid, contentType, additionalData = {}) => {
   logger.info(`Analytics: Entry View - ${contentType}/${pageName}`);
 };
 
-/**
- * Track custom event
- */
 export const trackEvent = (eventName, eventData = {}) => {
   logger.info(`Analytics: Event - ${eventName}`);
 };
 
-/**
- * Track Home Page - Trending visits
- */
 export const trackHomePage = () => {
   trackPageView('Home Page', {
     section: 'trending',
@@ -43,9 +19,6 @@ export const trackHomePage = () => {
   });
 };
 
-/**
- * Track Movie Detail Page - Visits per movie
- */
 export const trackMovieView = (movieUid, movieTitle, movieSlug) => {
   trackEntryView('Movie Detail Page', movieUid, 'movie', {
     title: movieTitle,
@@ -54,9 +27,6 @@ export const trackMovieView = (movieUid, movieTitle, movieSlug) => {
   });
 };
 
-/**
- * Track "Watched" event
- */
 export const trackWatchedMovie = (movieUid, movieTitle, duration = null) => {
   trackEvent('Movie Watched', {
     entry: { uid: movieUid, content_type: 'movie' },
@@ -66,9 +36,6 @@ export const trackWatchedMovie = (movieUid, movieTitle, duration = null) => {
   });
 };
 
-/**
- * Track Genre Page - Genre popularity
- */
 export const trackGenreView = (genreUid, genreName, genreSlug) => {
   trackEntryView('Genre Page', genreUid, 'genre', {
     name: genreName,
@@ -77,9 +44,6 @@ export const trackGenreView = (genreUid, genreName, genreSlug) => {
   });
 };
 
-/**
- * Track Director Page
- */
 export const trackDirectorView = (directorUid, directorName, directorSlug) => {
   trackEntryView('Director Page', directorUid, 'director', {
     name: directorName,
@@ -88,9 +52,6 @@ export const trackDirectorView = (directorUid, directorName, directorSlug) => {
   });
 };
 
-/**
- * Track Actor Page
- */
 export const trackActorView = (actorUid, actorName, actorSlug) => {
   trackEntryView('Actor Page', actorUid, 'actor', {
     name: actorName,
@@ -99,9 +60,6 @@ export const trackActorView = (actorUid, actorName, actorSlug) => {
   });
 };
 
-/**
- * Track Profile Selection - Engagement
- */
 export const trackProfileSelection = (profileId, profileName) => {
   trackEvent('Profile Selected', {
     profile_id: profileId,
@@ -110,9 +68,6 @@ export const trackProfileSelection = (profileId, profileName) => {
   });
 };
 
-/**
- * Track Profile Creation
- */
 export const trackProfileCreation = (profileId, profileName, isKids = false) => {
   trackEvent('Profile Created', {
     profile_id: profileId,
@@ -122,9 +77,6 @@ export const trackProfileCreation = (profileId, profileName, isKids = false) => 
   });
 };
 
-/**
- * Track Search - Popular searches
- */
 export const trackSearch = (searchQuery, resultsCount = 0) => {
   trackEvent('Search', {
     query: searchQuery,
@@ -133,9 +85,6 @@ export const trackSearch = (searchQuery, resultsCount = 0) => {
   });
 };
 
-/**
- * Track Login
- */
 export const trackLogin = (username) => {
   trackEvent('User Login', {
     username: username,
@@ -143,9 +92,6 @@ export const trackLogin = (username) => {
   });
 };
 
-/**
- * Track Sign Up
- */
 export const trackSignUp = (username) => {
   trackEvent('User Signup', {
     username: username,
@@ -153,9 +99,6 @@ export const trackSignUp = (username) => {
   });
 };
 
-/**
- * Track Review Submission
- */
 export const trackReviewSubmission = (movieUid, movieTitle, rating) => {
   trackEvent('Review Submitted', {
     entry: { uid: movieUid, content_type: 'movie' },
@@ -165,9 +108,6 @@ export const trackReviewSubmission = (movieUid, movieTitle, rating) => {
   });
 };
 
-/**
- * Track Video Play (if you have video playback)
- */
 export const trackVideoPlay = (movieUid, movieTitle) => {
   trackEvent('Video Play Started', {
     entry: { uid: movieUid, content_type: 'movie' },

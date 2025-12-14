@@ -118,14 +118,8 @@ const CreateProfilePage = () => {
       await updateUserProfiles(updatedProfiles);
       trackProfileCreation(newProfile.profile_name, newProfile.profile_name);
       setProfileTraits(newProfile, user);
-      
-      setNewProfileName('');
-      setSelectedAvatar(DEFAULT_AVATAR.id);
-      setIsKid(false);
-      setPreferredLanguage('english');
-      setFavoriteGenre('');
-      setShowCreateForm(false);
-      setError('');
+      selectProfile(newProfile);
+      navigate(`/home?preferred_language=${preferredLanguage}`);
     } catch (error) {
       logger.error('Profile save failed:', error.message);
       setError('Failed to save profile. Please try again.');
@@ -134,8 +128,6 @@ const CreateProfilePage = () => {
 
   const handleSelectProfile = (profile) => {
     selectProfile(profile);
-    
-    // Navigate with preferred_language in URL for Personalization
     const preferredLanguage = profile.preferred_language || 'english';
     navigate(`/home?preferred_language=${preferredLanguage}`);
   };

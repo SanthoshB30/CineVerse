@@ -5,7 +5,6 @@ import logger from '../utils/logger';
 
 const AuthContext = createContext(null);
 
-// Check if Contentstack is configured
 const isContentstackConfigured = () => {
   return !!(
     process.env.REACT_APP_CONTENTSTACK_API_KEY &&
@@ -43,7 +42,6 @@ export const AuthProvider = ({ children }) => {
     setLoading(false);
   }, []);
 
-  // LOCAL STORAGE FALLBACK FUNCTIONS
   const signupLocal = (username, email, password) => {
     const existingUsers = JSON.parse(localStorage.getItem('cineverse_users') || '{}');
     
@@ -173,12 +171,9 @@ export const AuthProvider = ({ children }) => {
 
   const selectProfile = (profile) => {
     setSelectedProfile(profile);
-    
-    // Store selected profile
     const storage = localStorage.getItem('cineverse_user') ? localStorage : sessionStorage;
     storage.setItem('cineverse_selected_profile', JSON.stringify(profile));
     
-    // Update URL with personalization parameters
     const urlParams = {};
     if (profile.preferred_language) {
       urlParams.preferred_language = profile.preferred_language;
@@ -190,18 +185,13 @@ export const AuthProvider = ({ children }) => {
       urlParams.is_kid = 'true';
     }
     updateUrlWithPersonalizationParams(urlParams);
-    
-    // Set Personalize traits globally
     setProfileTraits(profile, user);
   };
 
   const logout = () => {
     setUser(null);
     setSelectedProfile(null);
-    
-    // Clear personalization traits
     clearPersonalizeTraits();
-    
     localStorage.removeItem('cineverse_user');
     localStorage.removeItem('cineverse_selected_profile');
     sessionStorage.removeItem('cineverse_user');
@@ -218,7 +208,6 @@ export const AuthProvider = ({ children }) => {
     selectProfile,
     loading,
     isAuthenticated: !!user && !!selectedProfile,
-    // Helper for routes that only need user (not profile)
     hasUser: !!user
   };
 

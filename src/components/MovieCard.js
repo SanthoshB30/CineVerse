@@ -2,15 +2,9 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { getImageUrl } from '../api/contentstack';
 
-/**
- * MovieCard Component - Enhanced with accessibility and performance optimizations
- * @param {Object} movie - Movie data object
- */
 const MovieCard = ({ movie }) => {
   const posterUrl = getImageUrl(movie.poster_image);
   const defaultPoster = 'https://via.placeholder.com/300x450/1a1a1a/ffffff?text=No+Poster';
-
-  // Generate accessible title with key info
   const accessibleTitle = `${movie.title}${movie.release_year ? `, released in ${movie.release_year}` : ''}${movie.rating ? `, rated ${movie.rating.toFixed(1)} stars` : ''}`;
 
   return (

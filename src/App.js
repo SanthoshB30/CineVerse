@@ -34,10 +34,7 @@ function App() {
             <ThemeInitializer />
             <div className="App">
             <Routes>
-              {/* Default route - redirect to login */}
               <Route path="/" element={<Navigate to="/login" replace />} />
-              
-              {/* Public routes - Authentication */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignUpPage />} />
               <Route path="/forgot-password" element={
@@ -47,8 +44,6 @@ function App() {
                   <a href="/login" className="btn btn-primary">Back to Login</a>
                 </div>
               } />
-              
-              {/* Semi-protected routes - Profile Management */}
               <Route path="/create-profile" element={<CreateProfilePage />} />
               <Route path="/select-profile" element={<SelectProfilePage />} />
               <Route path="/profiles" element={
@@ -84,7 +79,6 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              {/* Protected routes - Main App */}
               <Route path="/home" element={
                 <ProtectedRoute>
                   <>
@@ -220,7 +214,6 @@ function App() {
                 </ProtectedRoute>
               } />
               
-              {/* 404 Route */}
               <Route path="*" element={
                 <div className="error-page">
                   <h1>404 - Page Not Found</h1>

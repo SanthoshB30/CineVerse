@@ -19,13 +19,11 @@ const SelectProfilePage = () => {
   ];
 
   useEffect(() => {
-    // Redirect if no profiles exist
     if (!user?.profiles || user.profiles.length === 0) {
       navigate('/create-profile');
       return;
     }
 
-    // Slideshow rotation
     const interval = setInterval(() => {
       setCurrentImageIndex((prev) => (prev + 1) % upcomingMoviesImages.length);
     }, 4000);
@@ -34,16 +32,9 @@ const SelectProfilePage = () => {
   }, [user, navigate]);
 
   const handleSelectProfile = (profile) => {
-    // Track profile selection
     trackProfileSelection(profile._metadata?.uid || profile.profile_name, profile.profile_name);
-    
-    // Set personalize traits for this profile
     setProfileTraits(profile, user);
-    
-    // Select profile (this also calls setProfileTraits in AuthContext, but it's safe to call twice)
     selectProfile(profile);
-    
-    // Navigate with preferred_language in URL for Personalization
     const preferredLanguage = profile.preferred_language || 'english';
     navigate(`/home?preferred_language=${preferredLanguage}`);
   };

@@ -19,7 +19,6 @@ const DirectorPage = () => {
     setDirector(directorData);
 
     if (directorData) {
-      // Get all movies and filter by this director
       const allMovies = await getAllMovies();
       const movies = allMovies.filter(movie => 
         movie.director?.some(d => d.uid === directorData.uid)

@@ -15,7 +15,6 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  // Load background image from app settings
   useEffect(() => {
     const bgImage = window.__CINEVERSE_BG_IMAGE__;
     if (bgImage) {
@@ -28,14 +27,12 @@ const LoginPage = () => {
     setError('');
     setLoading(true);
 
-    // Validate inputs
     if (!email.trim() || !password.trim()) {
       setError('Please enter both email and password');
       setLoading(false);
       return;
     }
 
-    // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       setError('Please enter a valid email address');
