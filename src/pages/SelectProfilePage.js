@@ -36,7 +36,8 @@ const SelectProfilePage = () => {
     setProfileTraits(profile, user);
     selectProfile(profile);
     const preferredLanguage = profile.preferred_language || 'english';
-    navigate(`/home?preferred_language=${preferredLanguage}`);
+    const isKids = profile.is_kid ? '&isKids=true' : '';
+    window.location.href = `/home?preferred_language=${preferredLanguage}${isKids}`;
   };
 
   if (!user?.profiles || user.profiles.length === 0) {

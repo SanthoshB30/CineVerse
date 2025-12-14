@@ -1,82 +1,153 @@
+/**
+ * Personalize Context
+ * 
+ * Provides Contentstack Personalize SDK access throughout the app.
+ * Uses the personalizeService for all SDK operations.
+ */
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
-import Personalize from '@contentstack/personalize-edge-sdk';
-import { getPersonalizationParamsFromUrl } from '../personalize/urlHelpers';
+import personalizeService from '../services/personalizeService';
 import logger from '../utils/logger';
 
 const PersonalizeContext = createContext(null);
 
-let sdkInstance = null;
-
-async function getPersonalizeInstance() {
-  if (sdkInstance) {
-    return sdkInstance;
-  }
-
-  if (!Personalize.getInitializationStatus()) {
-    const projectUid = process.env.REACT_APP_CONTENTSTACK_PERSONALIZE_PROJECT_UID;
-    
-    if (!projectUid) {
-      logger.error('Personalize Project UID not configured');
-      return null;
-    }
-
-    logger.group('Personalize SDK Initialization');
-    logger.info(`Project UID: ${projectUid}`);
-
-    try {
-      sdkInstance = await Personalize.init(projectUid);
-      
-      logger.success('Personalize SDK initialized');
-      logger.groupEnd();
-      
-      return sdkInstance;
-    } catch (error) {
-      logger.error('Personalize SDK initialization failed:', error.message);
-      logger.groupEnd();
-      return null;
-    }
-  }
-
-  return sdkInstance;
-}
-
 export function PersonalizeProvider({ children }) {
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [sdk, setSdk] = useState(null);
+  const [variantAlias, setVariantAlias] = useState('');
+  const [userAttributes, setUserAttributes] = useState({});
 
   useEffect(() => {
-    getPersonalizeInstance()
-      .then(async (instance) => {
-        setSdk(instance);
-        if (instance) {
-          window.csPersonalize = instance;
-          const urlParams = getPersonalizationParamsFromUrl();
-          if (Object.keys(urlParams).length > 0) {
-            logger.info('Applying URL parameters to Personalize');
-            try {
-              await instance.set(urlParams);
-              logger.success('URL parameters applied');
-            } catch (error) {
-              logger.warn('Failed to apply URL parameters:', error.message);
-            }
-          }
-        }
-      });
+    const init = async () => {
+      setIsLoading(true);
+      
+      try {
+        // Initialize personalize service
+        const result = await personalizeService.initializePersonalize();
+        
+        // Get SDK instance
+        const sdkInstance = personalizeService.getSDK();
+        setSdk(sdkInstance);
+        setIsInitialized(!!sdkInstance);
+        
+        // Store variant alias
+        setVariantAlias(result.variantAlias || '');
+        
+        // Store user attributes
+        setUserAttributes({
+          preferred_language: result.language,
+          profile_type: result.profileType,
+          favorite_genre: result.favoriteGenre
+        });
+        
+        logger.success('Personalize context initialized');
+        logger.info('Variant alias:', result.variantAlias || 'none');
+        
+      } catch (error) {
+        logger.error('Failed to initialize personalize context:', error.message);
+        setIsInitialized(false);
+      }
+      
+      setIsLoading(false);
+    };
+
+    init();
   }, []);
 
+  // Function to update attributes and refresh variants
+  const updateAttributes = async (attributes) => {
+    const result = await personalizeService.setUserAttributes(attributes);
+    if (result) {
+      setVariantAlias(result.variantAlias || '');
+      setUserAttributes(prev => ({ ...prev, ...attributes }));
+    }
+    return result;
+  };
+
+  const contextValue = {
+    isInitialized,
+    isLoading,
+    sdk,
+    Personalize: sdk,  // Alias for backwards compatibility
+    variantAlias,
+    userAttributes,
+    updateAttributes,
+    // Expose service functions
+    getVariantAlias: personalizeService.getVariantAlias,
+    getRawVariantAliases: personalizeService.getRawVariantAliases,
+    getVariantParam: personalizeService.getVariantParam,
+    setUserLanguage: personalizeService.setUserLanguage,
+    setUserProfileType: personalizeService.setUserProfileType,
+    setUserFavoriteGenre: personalizeService.setUserFavoriteGenre,
+    clearPersonalizationData: personalizeService.clearPersonalizationData
+  };
+
   return (
-    <PersonalizeContext.Provider value={sdk}>
+    <PersonalizeContext.Provider value={contextValue}>
       {children}
     </PersonalizeContext.Provider>
   );
 }
 
+/**
+ * Hook to access Personalize context
+ */
 export function usePersonalize() {
-  return useContext(PersonalizeContext);
+  const context = useContext(PersonalizeContext);
+  if (!context) {
+    return { 
+      isInitialized: false, 
+      isLoading: false, 
+      sdk: null, 
+      Personalize: null,
+      variantAlias: '',
+      userAttributes: {}
+    };
+  }
+  return context;
 }
 
+/**
+ * Get Personalize SDK instance directly (for use outside React components)
+ */
 export function getPersonalizeSdk() {
-  return sdkInstance || window.csPersonalize || null;
+  return personalizeService.getSDK();
+}
+
+/**
+ * Check if Personalize SDK is initialized
+ */
+export function isPersonalizeInitialized() {
+  return personalizeService.isSDKInitialized();
+}
+
+/**
+ * Set User Attributes
+ */
+export async function setPersonalizeUserAttributes(attributes) {
+  return personalizeService.setUserAttributes(attributes);
+}
+
+/**
+ * Get current variant param
+ */
+export function getVariantParam() {
+  return personalizeService.getVariantParam();
+}
+
+/**
+ * Get variant aliases object
+ */
+export function getVariantAliases() {
+  return personalizeService.getRawVariantAliases();
+}
+
+/**
+ * Get variant aliases as comma-separated string
+ */
+export function getVariantAliasesString() {
+  return personalizeService.getVariantAlias();
 }
 
 export default PersonalizeContext;
-

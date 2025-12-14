@@ -93,7 +93,6 @@ const GenrePage = () => {
 
       <div className="genre-content">
         <div className="genre-controls">
-          <h2>{movies.length} Movies</h2>
           <div className="sort-controls">
             <label>Sort by:</label>
             <select 

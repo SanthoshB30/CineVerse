@@ -11,9 +11,12 @@ export const WatchlistProvider = ({ children }) => {
   const [toast, setToast] = useState(null);
 
   // Get storage key based on user and profile
+  // Each profile has its own unique watchlist
   const getStorageKey = useCallback(() => {
     if (user && selectedProfile) {
-      return `${WATCHLIST_STORAGE_KEY}_${user.uid}_${selectedProfile.name}`;
+      // Use profile's unique identifier (UID from metadata or profile_name)
+      const profileId = selectedProfile._metadata?.uid || selectedProfile.profile_name || selectedProfile.name;
+      return `${WATCHLIST_STORAGE_KEY}_${user.uid}_${profileId}`;
     }
     return WATCHLIST_STORAGE_KEY;
   }, [user, selectedProfile]);
