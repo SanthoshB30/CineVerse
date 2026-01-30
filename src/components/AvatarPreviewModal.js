@@ -9,11 +9,10 @@ const AvatarPreviewModal = ({ avatar, variant = 'round', onConfirm, onCancel }) 
     };
 
     document.addEventListener('keydown', handleEscKey);
-    document.body.style.overflow = 'hidden';
+    // Don't block body scroll - allow scrolling in modal
 
     return () => {
       document.removeEventListener('keydown', handleEscKey);
-      document.body.style.overflow = 'unset';
     };
   }, [onCancel]);
 
@@ -23,7 +22,7 @@ const AvatarPreviewModal = ({ avatar, variant = 'round', onConfirm, onCancel }) 
     <div className="avatar-preview-modal" role="dialog" aria-modal="true">
       <div className="avatar-preview-backdrop" onClick={onCancel} aria-hidden="true" />
 
-      <div className="avatar-preview-content">
+      <div className="avatar-preview-content" onClick={(e) => e.stopPropagation()}>
         <button className="avatar-preview-close" onClick={onCancel} aria-label="Close preview">
           ✕
         </button>
