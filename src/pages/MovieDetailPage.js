@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getMovieBySlug, getImageUrl, getMoviesByGenre } from '../api/contentstack';
+import { getMovieBySlug, getImageUrl, getMoviesByGenre, getAllActors } from '../api/contentstack';
 import ReviewSection from '../components/ReviewSection';
 import MovieCard from '../components/MovieCard';
 import { trackMovieView, trackWatchedMovie } from '../services/analytics';
@@ -10,6 +10,7 @@ const MovieDetailPage = () => {
   const { slug } = useParams();
   const [movie, setMovie] = useState(null);
   const [similarMovies, setSimilarMovies] = useState([]);
+  const [cast, setCast] = useState([]);
   const [loading, setLoading] = useState(true);
   const [scrollY, setScrollY] = useState(0);
   const { isInWatchlist, toggleWatchlist } = useWatchlist();
@@ -35,6 +36,13 @@ const MovieDetailPage = () => {
     
     if (movieData) {
       trackMovieView(movieData.uid, movieData.title, movieData.slug);
+      
+      // Load Cast (Actors who worked on this movie)
+      const allActors = await getAllActors();
+      const movieCast = allActors.filter(actor => 
+        actor.movies?.some(m => m.uid === movieData.uid)
+      ).slice(0, 8);
+      setCast(movieCast);
     }
     
     if (movieData && movieData.genre && movieData.genre.length > 0) {
@@ -112,20 +120,8 @@ const MovieDetailPage = () => {
                 
                 {/* Floating Action Buttons */}
                 <div className="poster-actions">
-                  {movie.trailer_url && (
-                    <a 
-                      href={movie.trailer_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="action-btn primary"
-                      aria-label="Play trailer"
-                    >
-                      <span className="icon">▶</span>
-                      <span>Trailer</span>
-                    </a>
-                  )}
                   <button 
-                    className={`action-btn secondary ${isInWatchlist(movie.uid) ? 'active' : ''}`}
+                    className={`action-btn primary full-width ${isInWatchlist(movie.uid) ? 'active' : ''}`}
                     onClick={() => toggleWatchlist(movie)}
                     aria-label={isInWatchlist(movie.uid) ? 'Remove from watchlist' : 'Add to watchlist'}
                   >
@@ -225,6 +221,27 @@ const MovieDetailPage = () => {
                   dangerouslySetInnerHTML={{ __html: movie.description }}
                 />
               </div>
+
+              {/* Cast Section */}
+              {cast.length > 0 && (
+                <div className="cast-section">
+                  <h2>Top Cast</h2>
+                  <div className="cast-grid">
+                    {cast.map(actor => (
+                      <Link to={`/actor/${actor.slug}`} key={actor.uid} className="cast-item">
+                        <div className="cast-avatar">
+                          {actor.profile_image ? (
+                            <img src={getImageUrl(actor.profile_image)} alt={actor.name} />
+                          ) : (
+                            <span className="avatar-placeholder">👤</span>
+                          )}
+                        </div>
+                        <span className="cast-name">{actor.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
               
               {/* Key Info Grid */}
               <div className="key-info-grid">
